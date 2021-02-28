@@ -17,37 +17,42 @@ class MapHandler {
     var currentMapHeight: Int = 0
         private set
 
-    lateinit var staticMapBodies: MutableList<Body>
-        private set
+    val staticMapBodies = mutableListOf<Body>()
+    val staticWallBodies = mutableListOf<Body>()
 
     fun loadMap(mapName: String) {
+
+        staticMapBodies.clear()
+        staticWallBodies.clear()
 
         val tiledMap = mapLoader.load("maps/$mapName.tmx")
 
         currentTiledMap = tiledMap ?: throw Exception("Map not found")
         currentMapWidth = currentTiledMap.properties["width"] as Int * currentTiledMap.properties["tilewidth"] as Int
         currentMapHeight = currentTiledMap.properties["height"] as Int * currentTiledMap.properties["tileheight"] as Int
-        staticMapBodies = initStaticBodies(currentTiledMap)
+        initStaticBodies(currentTiledMap)
     }
 
-    private fun initStaticBodies(map: TiledMap): MutableList<Body> {
+    private fun initStaticBodies(map: TiledMap) {
 
         val rectangleList = map.layers.get("collisions")?.objects?.getByType(RectangleMapObject::class.java)
-            ?: throw Exception("No collision layer found")
-        val staticBodies = mutableListOf<Body>()
+                ?: throw Exception("No collision layer found")
 
         rectangleList.forEach { rectangleMapObject ->
 
             val rect = rectangleMapObject.rectangle
 
             val staticBody = Body(
-                Vector2(rect.x, rect.y),
-                Vector2(rect.width, rect.height),
-                isStatic = true
+                    Vector2(rect.x, rect.y),
+                    Vector2(rect.width, rect.height),
+                    isStatic = true
             )
-            staticBodies.add(staticBody)
-        }
 
-        return staticBodies
+            if (rectangleMapObject.properties["isWall"] as Boolean) {
+                staticWallBodies.add(staticBody)
+            }
+
+            staticMapBodies.add(staticBody)
+        }
     }
 }

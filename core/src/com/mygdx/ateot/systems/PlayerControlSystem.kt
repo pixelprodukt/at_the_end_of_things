@@ -6,6 +6,7 @@ import com.badlogic.ashley.core.Family
 import com.badlogic.ashley.systems.IteratingSystem
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.OrthographicCamera
+import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
 import com.mygdx.ateot.components.AnimationStateComponent
 import com.mygdx.ateot.components.BodyComponent
@@ -13,8 +14,15 @@ import com.mygdx.ateot.components.PlayerComponent
 import com.mygdx.ateot.components.TransformComponent
 import com.mygdx.ateot.enums.Direction
 import com.mygdx.ateot.handler.InputHandler
+import com.mygdx.ateot.helper.EntityFactory
+import kotlin.math.cos
+import kotlin.math.sin
 
-class PlayerControlSystem(private val inputHandler: InputHandler, private val camera: OrthographicCamera) :
+class PlayerControlSystem(
+    private val inputHandler: InputHandler,
+    private val camera: OrthographicCamera,
+    private val entityFactory: EntityFactory
+) :
     IteratingSystem(
         Family.all(
             PlayerComponent::class.java, BodyComponent::class.java,
@@ -121,6 +129,26 @@ class PlayerControlSystem(private val inputHandler: InputHandler, private val ca
             weaponTransform?.position?.z = -0.1f
         } else {
             weaponTransform?.position?.z = 0.1f
+        }
+
+
+        if (inputHandler.leftMousePressed) {
+            inputHandler.leftMousePressed = false
+            val spawn = Vector3(weaponTransform?.position)
+            val target = Vector3(mouseX, mouseY, 0.0f)
+
+            // Get rid of magic numbers. These here a basically distance of spawnpoint of the bullet to the weapons position
+            // and an offset on the y axis for the position of the barrel of the weapon image
+            // link to source for calculation of orbit: 
+            // https://gamedev.stackexchange.com/questions/100802/in-libgdx-how-might-i-make-an-object-orbit-around-a-position
+            val radians = Math.toRadians(weaponTransform?.rotation!!.toDouble())
+            val x = ((cos(radians) * 7) + weaponTransform.position.x).toFloat()
+            val y = ((sin(radians) * 7) + (weaponTransform.position.y + 1.5)).toFloat()
+            val spanwPointAroundWeapon = Vector3(x, y, 0.0f)
+
+            // Refactor: Naming is shit, I got confused myself for what the parameters are for
+            entityFactory.addEntityToEngine(entityFactory.createBullet(weaponTransform!!, spawn!!, target, spanwPointAroundWeapon))
+            //entityFactory.addEntityToEngine(entityFactory.createBullet(weaponTransform!!, spawn!!, target))
         }
     }
 }

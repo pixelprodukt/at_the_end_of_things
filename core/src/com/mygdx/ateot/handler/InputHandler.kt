@@ -10,6 +10,9 @@ class InputHandler : InputProcessor {
     var isLeftPressed: Boolean = false
     var isRightPressed: Boolean = false
 
+    var leftMousePressed: Boolean = false
+    var rightMousePressed: Boolean = false
+
     var isSpacePressed: Boolean = false
     var isActionPressed: Boolean = false
     var isInventoryPressed: Boolean = false
@@ -49,10 +52,18 @@ class InputHandler : InputProcessor {
     }
 
     override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
+
+        if (button == Input.Buttons.LEFT) leftMousePressed = true
+        if (button == Input.Buttons.RIGHT) rightMousePressed = true
+
         return false
     }
 
     override fun touchUp(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
+
+        if (button == Input.Buttons.LEFT) leftMousePressed = false
+        if (button == Input.Buttons.RIGHT) rightMousePressed = false
+
         return false
     }
 

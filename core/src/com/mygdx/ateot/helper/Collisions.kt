@@ -1,6 +1,7 @@
 package com.mygdx.ateot.helper
 
 import com.badlogic.gdx.math.Vector2
+import com.badlogic.gdx.math.Vector3
 import kotlin.math.abs
 import kotlin.math.sqrt
 
@@ -87,4 +88,11 @@ fun intersect(b1: Body, b2: Body): Boolean {
             b1.position.x + b1.size.x > b2.position.x &&
             b1.position.y < b2.position.y + b2.size.y &&
             b1.position.y + b1.size.y > b2.position.y)
+}
+
+fun pointIntersectsWithBody(point: Vector3, b2: Body): Boolean {
+    return (point.x < b2.position.x + b2.size.x &&
+            point.x > b2.position.x &&
+            point.y < b2.position.y + b2.size.y &&
+            point.y > b2.position.y)
 }
