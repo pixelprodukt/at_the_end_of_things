@@ -17,61 +17,61 @@ class EntityFactory(private val engine: Engine, private val assetHandler: AssetH
 
     fun createPlayer(): Entity {
         val entity = engine.createEntity()
-        val transform = engine.createComponent(TransformComponent::class.java)
-        val body = engine.createComponent(BodyComponent::class.java)
-        val texture = engine.createComponent(TextureComponent::class.java)
-        val player = engine.createComponent(PlayerComponent::class.java)
-        val animation = engine.createComponent(AnimationComponent::class.java)
-        val animationState = engine.createComponent(AnimationStateComponent::class.java)
+        val transformComponent = engine.createComponent(TransformComponent::class.java)
+        val bodyComponent = engine.createComponent(BodyComponent::class.java)
+        val textureComponent = engine.createComponent(TextureComponent::class.java)
+        val playerComponent = engine.createComponent(PlayerComponent::class.java)
+        val animationComponent = engine.createComponent(AnimationComponent::class.java)
+        val animationStateComponent = engine.createComponent(AnimationStateComponent::class.java)
 
-        body.body.position.x = 100f
-        body.body.position.y = 60f
+        bodyComponent.body.position.x = 100f
+        bodyComponent.body.position.y = 60f
 
-        body.body.size.set(8f, 8f)
-        body.body.offset.set(-4f, -7f)
+        bodyComponent.body.size.set(8f, 8f)
+        bodyComponent.body.offset.set(-4f, -7f)
 
-        animation.animations[AnimationStateComponent.IDLE_DOWN_RIGHT] =
+        animationComponent.animations[AnimationStateComponent.IDLE_DOWN_RIGHT] =
             assetHandler.animationHelper.createAnimation(
                 assetHandler.assets.get(Assets.PLAYER), 0, 0, 16, 1, 0.1f)
-        animation.animations[AnimationStateComponent.IDLE_DOWN_LEFT] =
+        animationComponent.animations[AnimationStateComponent.IDLE_DOWN_LEFT] =
             assetHandler.animationHelper.createAnimation(
                 assetHandler.assets.get(Assets.PLAYER), 0, 16, 16, 1, 0.1f)
-        animation.animations[AnimationStateComponent.IDLE_UP_RIGHT] =
+        animationComponent.animations[AnimationStateComponent.IDLE_UP_RIGHT] =
             assetHandler.animationHelper.createAnimation(
                 assetHandler.assets.get(Assets.PLAYER), 0, 16 * 2, 16, 1, 0.1f)
-        animation.animations[AnimationStateComponent.IDLE_UP_LEFT] =
+        animationComponent.animations[AnimationStateComponent.IDLE_UP_LEFT] =
             assetHandler.animationHelper.createAnimation(
                 assetHandler.assets.get(Assets.PLAYER), 0, 16 * 3, 16, 1, 0.1f)
 
-        animation.animations[AnimationStateComponent.MOVE_DOWN_RIGHT] =
+        animationComponent.animations[AnimationStateComponent.MOVE_DOWN_RIGHT] =
             assetHandler.animationHelper.createAnimation(
                 assetHandler.assets.get(Assets.PLAYER), 16, 0, 16, 4, 0.15f)
-        animation.animations[AnimationStateComponent.MOVE_DOWN_LEFT] =
+        animationComponent.animations[AnimationStateComponent.MOVE_DOWN_LEFT] =
             assetHandler.animationHelper.createAnimation(
                 assetHandler.assets.get(Assets.PLAYER), 16, 16, 16, 4, 0.15f)
-        animation.animations[AnimationStateComponent.MOVE_UP_RIGHT] =
+        animationComponent.animations[AnimationStateComponent.MOVE_UP_RIGHT] =
             assetHandler.animationHelper.createAnimation(
                 assetHandler.assets.get(Assets.PLAYER), 16, 16 * 2, 16, 4, 0.15f)
-        animation.animations[AnimationStateComponent.MOVE_UP_LEFT] =
+        animationComponent.animations[AnimationStateComponent.MOVE_UP_LEFT] =
             assetHandler.animationHelper.createAnimation(
                 assetHandler.assets.get(Assets.PLAYER), 16, 16 * 3, 16, 4, 0.15f)
 
-        animationState.state = AnimationStateComponent.MOVE_DOWN_RIGHT
-        animationState.isLooping = true
+        animationStateComponent.state = AnimationStateComponent.MOVE_DOWN_RIGHT
+        animationStateComponent.isLooping = true
 
         val playerTex: Texture = assetHandler.assets.get(Assets.PLAYER)
-        texture.region = TextureRegion(playerTex)
+        textureComponent.region = TextureRegion(playerTex)
 
-        player.weapon = createWeapon()
+        playerComponent.weapon = createWeapon()
 
-        engine.addEntity(player.weapon)
+        engine.addEntity(playerComponent.weapon)
 
-        entity.add(transform)
-        entity.add(body)
-        entity.add(texture)
-        entity.add(player)
-        entity.add(animation)
-        entity.add(animationState)
+        entity.add(transformComponent)
+        entity.add(bodyComponent)
+        entity.add(textureComponent)
+        entity.add(playerComponent)
+        entity.add(animationComponent)
+        entity.add(animationStateComponent)
 
         return entity
     }
@@ -95,6 +95,10 @@ class EntityFactory(private val engine: Engine, private val assetHandler: AssetH
 
         transform.position.z = 0.1f
 
+        weapon.muzzle = createMuzzleFlash()
+
+        engine.addEntity(weapon.muzzle)
+
         entity.add(transform)
         entity.add(animation)
         entity.add(animationState)
@@ -104,7 +108,7 @@ class EntityFactory(private val engine: Engine, private val assetHandler: AssetH
         return entity
     }
 
-    fun createBullet(spawnTransform: TransformComponent, spawnVector: Vector3, targetVector: Vector3, spanwPointAroundWeapon: Vector3): Entity {
+    fun createBullet(spawnTransform: TransformComponent, spawnVector: Vector3, targetVector: Vector3, spawnPointAroundWeapon: Vector3): Entity {
 
         val entity = engine.createEntity()
 
@@ -115,16 +119,43 @@ class EntityFactory(private val engine: Engine, private val assetHandler: AssetH
         bulletComponent.timeAlive = 0.0f
 
         val transformComponent = engine.createComponent(TransformComponent::class.java)
-        transformComponent.position.set(spanwPointAroundWeapon)
+        transformComponent.position.set(spawnPointAroundWeapon)
         transformComponent.rotation = spawnTransform.rotation
 
         var textureComponent = engine.createComponent(TextureComponent::class.java)
         val texture: Texture = assetHandler.assets.get(Assets.RIFLE_MUZZLE_BULLET)
-        textureComponent.region = TextureRegion(texture, 16, 0, 16, 16)
+        textureComponent.region = TextureRegion(texture, 4 * 16, 0, 16, 16)
 
         entity.add(bulletComponent)
         entity.add(transformComponent)
         entity.add(textureComponent)
+
+        return entity
+    }
+
+    fun createMuzzleFlash(): Entity {
+
+        val entity = engine.createEntity()
+
+        val transformComponent = engine.createComponent(TransformComponent::class.java)
+        var textureComponent = engine.createComponent(TextureComponent::class.java)
+        val animationComponent = engine.createComponent(AnimationComponent::class.java)
+        val animationStateComponent = engine.createComponent(AnimationStateComponent::class.java)
+
+        transformComponent.position.z = 111.5f
+        transformComponent.isHidden = true
+
+        animationComponent.animations[AnimationStateComponent.WEAPON_MUZZLE] = assetHandler.animationHelper.createAnimation(
+            assetHandler.assets.get(Assets.RIFLE_MUZZLE_BULLET), 0, 0, 16, 4, 0.05f)
+
+        animationStateComponent.state = AnimationStateComponent.WEAPON_MUZZLE
+        //animationStateComponent.isLooping = true
+        animationStateComponent.time = 55f
+
+        entity.add(transformComponent)
+        entity.add(textureComponent)
+        entity.add(animationComponent)
+        entity.add(animationStateComponent)
 
         return entity
     }

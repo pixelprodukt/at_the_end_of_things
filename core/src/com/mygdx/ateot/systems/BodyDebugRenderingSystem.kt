@@ -14,7 +14,7 @@ import com.mygdx.ateot.handler.InputHandler
 import com.mygdx.ateot.handler.MapHandler
 import ktx.graphics.use
 
-class ShapeRenderingSystem(
+class BodyDebugRenderingSystem(
     private val mapHandler: MapHandler,
     private val inputHandler: InputHandler,
     private val camera: OrthographicCamera

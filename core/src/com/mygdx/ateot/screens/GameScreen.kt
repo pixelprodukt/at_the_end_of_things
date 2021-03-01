@@ -8,12 +8,9 @@ import com.badlogic.ashley.utils.ImmutableArray
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Screen
 import com.badlogic.gdx.graphics.GL20
-import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
-import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer
 import com.mygdx.ateot.components.*
-import com.mygdx.ateot.constants.Assets
 import com.mygdx.ateot.handler.AssetHandler
 import com.mygdx.ateot.handler.InputHandler
 import com.mygdx.ateot.handler.MapHandler
@@ -44,9 +41,10 @@ class GameScreen : Screen {
 
         engine.addSystem(AnimationSystem())
         engine.addSystem(renderingSystem)
-        engine.addSystem(ShapeRenderingSystem(mapHandler, inputHandler, camera))
-        engine.addSystem(WeaponSystem(camera))
+        engine.addSystem(BodyDebugRenderingSystem(mapHandler, inputHandler, camera))
+        engine.addSystem(TransformDebugRenderingSystem(inputHandler, camera))
         engine.addSystem(PlayerControlSystem(inputHandler, camera, entityFactory))
+        engine.addSystem(WeaponSystem(camera))
         engine.addSystem(CollisionSystem(mapHandler))
         engine.addSystem(BulletSystem(mapHandler))
 

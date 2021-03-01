@@ -6,12 +6,8 @@ import com.badlogic.ashley.core.Family
 import com.badlogic.ashley.systems.IteratingSystem
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.OrthographicCamera
-import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
-import com.mygdx.ateot.components.AnimationStateComponent
-import com.mygdx.ateot.components.BodyComponent
-import com.mygdx.ateot.components.PlayerComponent
-import com.mygdx.ateot.components.TransformComponent
+import com.mygdx.ateot.components.*
 import com.mygdx.ateot.enums.Direction
 import com.mygdx.ateot.handler.InputHandler
 import com.mygdx.ateot.helper.EntityFactory
@@ -121,33 +117,42 @@ class PlayerControlSystem(
         transformComponent.position.x = bodyComponent.body.position.x
         transformComponent.position.y = bodyComponent.body.position.y
 
-        val weaponTransform = playerComponent.weapon?.getComponent(TransformComponent::class.java)
-        weaponTransform?.position?.x = bodyComponent.body.position.x
-        weaponTransform?.position?.y = bodyComponent.body.position.y
+        weaponTransformComponent?.position?.x = bodyComponent.body.position.x
+        weaponTransformComponent?.position?.y = bodyComponent.body.position.y
 
         if (playerComponent.direction == Direction.UP_LEFT || playerComponent.direction == Direction.UP_RIGHT) {
-            weaponTransform?.position?.z = -0.1f
+            weaponTransformComponent?.position?.z = -0.1f
         } else {
-            weaponTransform?.position?.z = 0.1f
+            weaponTransformComponent?.position?.z = 0.1f
         }
 
 
         if (inputHandler.leftMousePressed) {
             inputHandler.leftMousePressed = false
-            val spawn = Vector3(weaponTransform?.position)
+
+            val weaponComponent = playerComponent.weapon?.getComponent(WeaponComponent::class.java)
+            val muzzleTransformComponent = weaponComponent?.muzzle?.getComponent(TransformComponent::class.java)
+            val muzzleAnimationStateComponent = weaponComponent?.muzzle?.getComponent(AnimationStateComponent::class.java)
+
+            val spawn = Vector3(weaponTransformComponent?.position)
             val target = Vector3(mouseX, mouseY, 0.0f)
 
             // Get rid of magic numbers. These here a basically distance of spawnpoint of the bullet to the weapons position
             // and an offset on the y axis for the position of the barrel of the weapon image
-            // link to source for calculation of orbit: 
+            // link to source for calculation of orbit:
             // https://gamedev.stackexchange.com/questions/100802/in-libgdx-how-might-i-make-an-object-orbit-around-a-position
-            val radians = Math.toRadians(weaponTransform?.rotation!!.toDouble())
-            val x = ((cos(radians) * 7) + weaponTransform.position.x).toFloat()
-            val y = ((sin(radians) * 7) + (weaponTransform.position.y + 1.5)).toFloat()
-            val spanwPointAroundWeapon = Vector3(x, y, 0.0f)
+            val radians = Math.toRadians(weaponTransformComponent?.rotation!!.toDouble())
+            val distanceToCenter = 16
 
-            // Refactor: Naming is shit, I got confused myself for what the parameters are for
-            entityFactory.addEntityToEngine(entityFactory.createBullet(weaponTransform!!, spawn!!, target, spanwPointAroundWeapon))
+            val x = ((cos(radians) * distanceToCenter) + ((weaponTransformComponent.position.x) + weaponTransformComponent.offset.x + weaponTransformComponent.originOffset.x)).toFloat()
+            val y = ((sin(radians) * distanceToCenter) + ((weaponTransformComponent.position.y) + weaponTransformComponent.offset.y + weaponTransformComponent.originOffset.y)).toFloat()
+            val spawnPointAroundWeapon = Vector3(x, y, 0.0f)
+
+            muzzleAnimationStateComponent?.time = 0.0f
+            muzzleTransformComponent?.isHidden = false
+
+            // TODO Refactor: Naming is shit, I got confused myself for what the parameters are for
+            entityFactory.addEntityToEngine(entityFactory.createBullet(weaponTransformComponent!!, spawn!!, target, spawnPointAroundWeapon))
             //entityFactory.addEntityToEngine(entityFactory.createBullet(weaponTransform!!, spawn!!, target))
         }
     }
