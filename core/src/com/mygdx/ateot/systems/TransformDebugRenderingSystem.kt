@@ -10,13 +10,15 @@ import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.mygdx.ateot.components.TransformComponent
 import com.mygdx.ateot.handler.InputHandler
+import com.mygdx.ateot.helper.GameContext
 import ktx.graphics.use
 
 class TransformDebugRenderingSystem(
-    private val inputHandler: InputHandler,
+    context: GameContext,
     private val camera: OrthographicCamera
 ) : IteratingSystem(Family.all(TransformComponent::class.java).get()) {
 
+    private val inputHandler = context.inputHandler
     private val shapeRenderer = ShapeRenderer()
     private val mapperTransformComponent = ComponentMapper.getFor(TransformComponent::class.java)
     private val renderQueue = mutableListOf<Entity>()

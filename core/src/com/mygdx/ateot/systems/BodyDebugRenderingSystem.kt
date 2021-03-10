@@ -12,15 +12,17 @@ import com.mygdx.ateot.components.BodyComponent
 import com.mygdx.ateot.components.TransformComponent
 import com.mygdx.ateot.handler.InputHandler
 import com.mygdx.ateot.handler.MapHandler
+import com.mygdx.ateot.helper.GameContext
 import ktx.graphics.use
 
 class BodyDebugRenderingSystem(
-    private val mapHandler: MapHandler,
-    private val inputHandler: InputHandler,
+    context: GameContext,
     private val camera: OrthographicCamera
 ) :
     IteratingSystem(Family.all(BodyComponent::class.java).get()) {
 
+    private val mapHandler = context.mapHandler
+    private val inputHandler = context.inputHandler
     private val shapeRenderer = ShapeRenderer()
     private val mapperBodyComponent = ComponentMapper.getFor(BodyComponent::class.java)
     private val renderQueue = mutableListOf<Entity>()

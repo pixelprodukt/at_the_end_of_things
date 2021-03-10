@@ -7,12 +7,17 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.math.Vector3
 import com.mygdx.ateot.components.*
 import com.mygdx.ateot.constants.Assets
-import com.mygdx.ateot.handler.AssetHandler
 
-class EntityFactory(private val engine: Engine, private val assetHandler: AssetHandler) {
+class EntityBuilder(private val engine: Engine, context: GameContext) {
+
+    private val assetHandler = context.assetHandler
 
     fun addEntityToEngine(entity: Entity) {
         engine.addEntity(entity)
+    }
+
+    fun removeFromEngine(entity: Entity) {
+        engine.removeEntity(entity)
     }
 
     fun createPlayer(): Entity {
@@ -149,9 +154,34 @@ class EntityFactory(private val engine: Engine, private val assetHandler: AssetH
             assetHandler.assets.get(Assets.RIFLE_MUZZLE_BULLET), 0, 0, 16, 4, 0.05f)
 
         animationStateComponent.state = AnimationStateComponent.WEAPON_MUZZLE
-        //animationStateComponent.isLooping = true
         animationStateComponent.time = 55f
 
+        entity.add(transformComponent)
+        entity.add(textureComponent)
+        entity.add(animationComponent)
+        entity.add(animationStateComponent)
+
+        return entity
+    }
+
+    fun createExplosion(data: Vector3): Entity {
+
+        val entity = engine.createEntity()
+
+        val explosionComponent = engine.createComponent(ExplosionComponent::class.java)
+        val transformComponent = engine.createComponent(TransformComponent::class.java)
+        var textureComponent = engine.createComponent(TextureComponent::class.java)
+        val animationComponent = engine.createComponent(AnimationComponent::class.java)
+        val animationStateComponent = engine.createComponent(AnimationStateComponent::class.java)
+
+        transformComponent.position.set(data)
+
+        animationComponent.animations[AnimationStateComponent.WEAPON_EXPLOSION] = assetHandler.animationHelper.createAnimation(
+            assetHandler.assets.get(Assets.RIFLE_EXPLOSION), 0, 0, 16, 5, 0.05f)
+
+        animationStateComponent.state = AnimationStateComponent.WEAPON_EXPLOSION
+
+        entity.add(explosionComponent)
         entity.add(transformComponent)
         entity.add(textureComponent)
         entity.add(animationComponent)

@@ -14,13 +14,15 @@ import com.mygdx.ateot.components.*
 import com.mygdx.ateot.handler.AssetHandler
 import com.mygdx.ateot.handler.InputHandler
 import com.mygdx.ateot.handler.MapHandler
-import com.mygdx.ateot.helper.EntityFactory
+import com.mygdx.ateot.helper.EntityBuilder
+import com.mygdx.ateot.helper.GameContext
 import com.mygdx.ateot.systems.*
 
 class GameScreen : Screen {
 
-    private val assetHandler = AssetHandler()
-    private val inputHandler = InputHandler()
+    private val context = GameContext()
+    //private val assetHandler = AssetHandler()
+    //private val inputHandler = InputHandler()
     private val batch = SpriteBatch()
 
     private val renderingSystem = RenderingSystem(batch)
@@ -28,31 +30,32 @@ class GameScreen : Screen {
 
     private val engine = PooledEngine()
 
-    private val mapHandler = MapHandler().apply { loadMap("ateot_testmap") }
-    private val mapRenderer = OrthogonalTiledMapRenderer(mapHandler.currentTiledMap)
+    //private val mapHandler = MapHandler().apply { loadMap("ateot_testmap") }
+    private val mapRenderer = OrthogonalTiledMapRenderer(context.mapHandler.currentTiledMap)
 
     private var playerEntity: ImmutableArray<Entity>?
     private var playerTransformComponent: TransformComponent?
 
-    private val entityFactory = EntityFactory(engine, assetHandler)
+    private val entityFactory = EntityBuilder(engine, context)
 
     init {
         batch.projectionMatrix = camera.combined
 
         engine.addSystem(AnimationSystem())
         engine.addSystem(renderingSystem)
-        engine.addSystem(BodyDebugRenderingSystem(mapHandler, inputHandler, camera))
-        engine.addSystem(TransformDebugRenderingSystem(inputHandler, camera))
-        engine.addSystem(PlayerControlSystem(inputHandler, camera, entityFactory))
+        engine.addSystem(BodyDebugRenderingSystem(context, camera))
+        engine.addSystem(TransformDebugRenderingSystem(context, camera))
+        engine.addSystem(PlayerControlSystem(context, camera))
         engine.addSystem(WeaponSystem(camera))
-        engine.addSystem(CollisionSystem(mapHandler))
-        engine.addSystem(BulletSystem(mapHandler))
+        engine.addSystem(CollisionSystem(context))
+        engine.addSystem(BulletSystem(context, entityFactory, camera))
+        engine.addSystem(ExplosionSystem(context, entityFactory))
 
-        Gdx.input.inputProcessor = inputHandler
+        Gdx.input.inputProcessor = context.inputHandler
 
         engine.addEntity(entityFactory.createPlayer())
 
-        mapRenderer.map = mapHandler.currentTiledMap
+        mapRenderer.map = context.mapHandler.currentTiledMap
         mapRenderer.setView(camera)
 
         playerEntity = engine.getEntitiesFor(Family.all(PlayerComponent::class.java).get())
@@ -73,8 +76,8 @@ class GameScreen : Screen {
 
         mapRenderer.setView(camera)
         camera.position.set(playerTransformComponent!!.position.x, playerTransformComponent!!.position.y, 0f)
-        camera.position.x = clamp(camera.position.x, mapHandler.currentMapWidth!!.toFloat() - (camera.viewportWidth / 2), 0 + (camera.viewportWidth / 2))
-        camera.position.y = clamp(camera.position.y, mapHandler.currentMapHeight!!.toFloat() - (camera.viewportHeight / 2), 0 + (camera.viewportHeight / 2))
+        camera.position.x = clamp(camera.position.x, context.mapHandler.currentMapWidth!!.toFloat() - (camera.viewportWidth / 2), 0 + (camera.viewportWidth / 2))
+        camera.position.y = clamp(camera.position.y, context.mapHandler.currentMapHeight!!.toFloat() - (camera.viewportHeight / 2), 0 + (camera.viewportHeight / 2))
 
         mapRenderer.render()
 

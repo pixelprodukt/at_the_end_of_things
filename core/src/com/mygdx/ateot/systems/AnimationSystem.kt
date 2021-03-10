@@ -34,10 +34,5 @@ class AnimationSystem : IteratingSystem(
         }
 
         animationStateComponent.time += deltaTime
-
-        // just keep in case it is still needed, else remove later
-        /*if (animationComponent.animations[animationStateComponent.state]!!.isAnimationFinished(animationStateComponent.time)) {
-            animationStateComponent.time = 0.0f
-        }*/
     }
 }

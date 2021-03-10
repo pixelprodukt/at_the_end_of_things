@@ -9,15 +9,13 @@ import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.math.Vector3
 import com.mygdx.ateot.components.*
 import com.mygdx.ateot.enums.Direction
-import com.mygdx.ateot.handler.InputHandler
-import com.mygdx.ateot.helper.EntityFactory
-import kotlin.math.cos
-import kotlin.math.sin
+import com.mygdx.ateot.enums.GameEventType
+import com.mygdx.ateot.events.WeaponFireEvent
+import com.mygdx.ateot.helper.GameContext
 
 class PlayerControlSystem(
-    private val inputHandler: InputHandler,
+    context: GameContext,
     private val camera: OrthographicCamera,
-    private val entityFactory: EntityFactory
 ) :
     IteratingSystem(
         Family.all(
@@ -26,6 +24,8 @@ class PlayerControlSystem(
         ).get()
     ) {
 
+    private val inputHandler = context.inputHandler
+    private val eventHandler = context.eventHandler
     private val mapperPlayerComponent = ComponentMapper.getFor(PlayerComponent::class.java)
     private val mapperBodyComponent = ComponentMapper.getFor(BodyComponent::class.java)
     private val mapperAnimationStateComponent = ComponentMapper.getFor(AnimationStateComponent::class.java)
@@ -126,7 +126,6 @@ class PlayerControlSystem(
             weaponTransformComponent?.position?.z = 0.1f
         }
 
-
         if (inputHandler.leftMousePressed) {
             inputHandler.leftMousePressed = false
 
@@ -134,26 +133,10 @@ class PlayerControlSystem(
             val muzzleTransformComponent = weaponComponent?.muzzle?.getComponent(TransformComponent::class.java)
             val muzzleAnimationStateComponent = weaponComponent?.muzzle?.getComponent(AnimationStateComponent::class.java)
 
-            val spawn = Vector3(weaponTransformComponent?.position)
-            val target = Vector3(mouseX, mouseY, 0.0f)
-
-            // Get rid of magic numbers. These here a basically distance of spawnpoint of the bullet to the weapons position
-            // and an offset on the y axis for the position of the barrel of the weapon image
-            // link to source for calculation of orbit:
-            // https://gamedev.stackexchange.com/questions/100802/in-libgdx-how-might-i-make-an-object-orbit-around-a-position
-            val radians = Math.toRadians(weaponTransformComponent?.rotation!!.toDouble())
-            val distanceToCenter = 16
-
-            val x = ((cos(radians) * distanceToCenter) + ((weaponTransformComponent.position.x) + weaponTransformComponent.offset.x + weaponTransformComponent.originOffset.x)).toFloat()
-            val y = ((sin(radians) * distanceToCenter) + ((weaponTransformComponent.position.y) + weaponTransformComponent.offset.y + weaponTransformComponent.originOffset.y)).toFloat()
-            val spawnPointAroundWeapon = Vector3(x, y, 0.0f)
-
             muzzleAnimationStateComponent?.time = 0.0f
             muzzleTransformComponent?.isHidden = false
 
-            // TODO Refactor: Naming is shit, I got confused myself for what the parameters are for
-            entityFactory.addEntityToEngine(entityFactory.createBullet(weaponTransformComponent!!, spawn!!, target, spawnPointAroundWeapon))
-            //entityFactory.addEntityToEngine(entityFactory.createBullet(weaponTransform!!, spawn!!, target))
+            eventHandler.publish(WeaponFireEvent(weaponTransformComponent!!))
         }
     }
 }

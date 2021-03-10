@@ -29,5 +29,6 @@ class AnimationStateComponent : Component {
         const val WEAPON_ORIENTATION_LEFT = 8
         const val WEAPON_ORIENTATION_RIGHT = 9
         const val WEAPON_MUZZLE = 10
+        const val WEAPON_EXPLOSION = 11
     }
 }

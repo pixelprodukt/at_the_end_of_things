@@ -9,11 +9,13 @@ import com.mygdx.ateot.components.PlayerComponent
 import com.mygdx.ateot.components.TransformComponent
 import com.mygdx.ateot.components.WeaponComponent
 import com.mygdx.ateot.handler.MapHandler
+import com.mygdx.ateot.helper.GameContext
 import com.mygdx.ateot.helper.resolveCollision
 
-class CollisionSystem(private val mapHandler: MapHandler) :
+class CollisionSystem(context: GameContext) :
     IteratingSystem(Family.all(BodyComponent::class.java).get()) {
 
+    private val mapHandler = context.mapHandler
     private val collisionQueue = mutableListOf<Entity>()
     private val mapperBodyComponent = ComponentMapper.getFor(BodyComponent::class.java)
     private val mapperTransformComponent = ComponentMapper.getFor(TransformComponent::class.java)
