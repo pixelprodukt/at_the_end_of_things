@@ -21,21 +21,13 @@ import com.mygdx.ateot.systems.*
 class GameScreen : Screen {
 
     private val context = GameContext()
-    //private val assetHandler = AssetHandler()
-    //private val inputHandler = InputHandler()
     private val batch = SpriteBatch()
-
     private val renderingSystem = RenderingSystem(batch)
     private val camera = renderingSystem.camera
-
     private val engine = PooledEngine()
-
-    //private val mapHandler = MapHandler().apply { loadMap("ateot_testmap") }
     private val mapRenderer = OrthogonalTiledMapRenderer(context.mapHandler.currentTiledMap)
-
     private var playerEntity: ImmutableArray<Entity>?
     private var playerTransformComponent: TransformComponent?
-
     private val entityFactory = EntityBuilder(engine, context)
 
     init {

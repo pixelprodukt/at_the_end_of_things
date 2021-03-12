@@ -151,7 +151,7 @@ class EntityBuilder(private val engine: Engine, context: GameContext) {
         transformComponent.isHidden = true
 
         animationComponent.animations[AnimationStateComponent.WEAPON_MUZZLE] = assetHandler.animationHelper.createAnimation(
-            assetHandler.assets.get(Assets.RIFLE_MUZZLE_BULLET), 0, 0, 16, 4, 0.05f)
+            assetHandler.assets.get(Assets.RIFLE_MUZZLE_BULLET), 0, 0, 16, 4, 0.025f)
 
         animationStateComponent.state = AnimationStateComponent.WEAPON_MUZZLE
         animationStateComponent.time = 55f
