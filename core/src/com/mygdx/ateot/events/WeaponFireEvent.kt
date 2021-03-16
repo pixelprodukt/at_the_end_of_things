@@ -1,5 +1,5 @@
 package com.mygdx.ateot.events
 
-import com.mygdx.ateot.components.TransformComponent
+import com.badlogic.ashley.core.Entity
 
-class WeaponFireEvent(data: TransformComponent) : GameEvent<TransformComponent>(data)
+class WeaponFireEvent(data: Entity) : GameEvent<Entity>(data)

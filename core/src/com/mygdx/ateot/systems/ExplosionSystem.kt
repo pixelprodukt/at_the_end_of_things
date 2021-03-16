@@ -4,17 +4,16 @@ import com.badlogic.ashley.core.ComponentMapper
 import com.badlogic.ashley.core.Entity
 import com.badlogic.ashley.core.Family
 import com.badlogic.ashley.systems.IteratingSystem
-import com.badlogic.gdx.Gdx
 import com.mygdx.ateot.components.AnimationComponent
 import com.mygdx.ateot.components.AnimationStateComponent
 import com.mygdx.ateot.components.ExplosionComponent
 import com.mygdx.ateot.events.BulletDestroyedEvent
 import com.mygdx.ateot.events.GameEventListener
-import com.mygdx.ateot.helper.EntityBuilder
+import com.mygdx.ateot.helper.EntityFactory
 import com.mygdx.ateot.helper.GameContext
 
 class ExplosionSystem(
-    context: GameContext, private val entityBuilder: EntityBuilder
+    context: GameContext, private val entityFactory: EntityFactory
     ) :
     IteratingSystem(Family.all(ExplosionComponent::class.java).get()) {
 
@@ -25,7 +24,7 @@ class ExplosionSystem(
     init {
         eventHandler.addListener(object : GameEventListener<BulletDestroyedEvent> {
             override fun handle(gameEvent: BulletDestroyedEvent) {
-                entityBuilder.addEntityToEngine(entityBuilder.createExplosion(gameEvent.data))
+                entityFactory.addEntityToEngine(entityFactory.createExplosion(gameEvent.data))
             }
         })
     }
@@ -36,7 +35,7 @@ class ExplosionSystem(
 
         if (animationComponent.animations[AnimationStateComponent.WEAPON_EXPLOSION]?.isAnimationFinished(animationStateComponent.time) == true) {
             animationStateComponent.time = 0.0f
-            entityBuilder.removeFromEngine(entity!!)
+            entityFactory.removeFromEngine(entity!!)
         }
     }
 }

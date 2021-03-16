@@ -39,10 +39,13 @@ class CollisionSystem(context: GameContext) :
                  */
                 if (ComponentMapper.getFor(PlayerComponent::class.java).get(entity) != null) {
                     val playerComponent = ComponentMapper.getFor(PlayerComponent::class.java).get(entity)
-                    val weaponTransform = ComponentMapper.getFor(TransformComponent::class.java).get(playerComponent.weapon)
 
-                    weaponTransform.position.x = entityBody.position.x
-                    weaponTransform.position.y = entityBody.position.y
+                    if (playerComponent.weapon != null) {
+                        val weaponTransform = ComponentMapper.getFor(TransformComponent::class.java).get(playerComponent.weapon)
+
+                        weaponTransform.position.x = entityBody.position.x
+                        weaponTransform.position.y = entityBody.position.y
+                    }
                 }
             }
         }

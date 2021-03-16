@@ -48,7 +48,6 @@ class RenderingSystem(private val batch: SpriteBatch) : SortedIteratingSystem(
         batch.use { spriteBatch ->
 
             for (entity in renderQueue) {
-
                 val textureComponent = mapperTextureComponent.get(entity)
                 val transformComponent = mapperTransformComponent.get(entity)
 
@@ -78,5 +77,7 @@ class RenderingSystem(private val batch: SpriteBatch) : SortedIteratingSystem(
 
     override fun processEntity(entity: Entity?, deltaTime: Float) {
         renderQueue.add(entity!!)
+
+        forceSort()
     }
 }

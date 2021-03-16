@@ -1,5 +1,5 @@
 package com.mygdx.ateot.events
 
-import com.badlogic.gdx.math.Vector3
+import com.mygdx.ateot.data.BulletDestroyedEventData
 
-class BulletDestroyedEvent(data: Vector3) : GameEvent<Vector3>(data)
+class BulletDestroyedEvent(data: BulletDestroyedEventData) : GameEvent<BulletDestroyedEventData>(data)

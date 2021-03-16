@@ -11,10 +11,11 @@ import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer
 import com.mygdx.ateot.components.*
-import com.mygdx.ateot.handler.AssetHandler
-import com.mygdx.ateot.handler.InputHandler
-import com.mygdx.ateot.handler.MapHandler
-import com.mygdx.ateot.helper.EntityBuilder
+import com.mygdx.ateot.constants.Assets
+import com.mygdx.ateot.constants.WeaponConfig
+import com.mygdx.ateot.enums.BulletType
+import com.mygdx.ateot.enums.WeaponType
+import com.mygdx.ateot.helper.EntityFactory
 import com.mygdx.ateot.helper.GameContext
 import com.mygdx.ateot.systems.*
 
@@ -28,7 +29,7 @@ class GameScreen : Screen {
     private val mapRenderer = OrthogonalTiledMapRenderer(context.mapHandler.currentTiledMap)
     private var playerEntity: ImmutableArray<Entity>?
     private var playerTransformComponent: TransformComponent?
-    private val entityFactory = EntityBuilder(engine, context)
+    private val entityFactory = EntityFactory(engine, context)
 
     init {
         batch.projectionMatrix = camera.combined
@@ -45,21 +46,14 @@ class GameScreen : Screen {
 
         Gdx.input.inputProcessor = context.inputHandler
 
-        engine.addEntity(entityFactory.createPlayer())
+        //engine.addEntity(entityFactory.createPlayer())
+        initEntities(engine)
 
         mapRenderer.map = context.mapHandler.currentTiledMap
         mapRenderer.setView(camera)
 
         playerEntity = engine.getEntitiesFor(Family.all(PlayerComponent::class.java).get())
         playerTransformComponent = ComponentMapper.getFor(TransformComponent::class.java).get(playerEntity?.first())
-    }
-
-    private fun clamp(value: Float, max: Float, min: Float): Float {
-        return if (value > min) {
-            if (value < max) {
-                value
-            } else max
-        } else min
     }
 
     override fun render(delta: Float) {
@@ -87,4 +81,27 @@ class GameScreen : Screen {
     override fun hide() {}
 
     override fun dispose() {}
+
+    fun initEntities(engine: PooledEngine) {
+        val player = entityFactory.createPlayer()
+        val rifle = entityFactory.createWeapon(WeaponConfig.valuesFor[WeaponType.RIFLE]!!)
+        val rocketlauncher = entityFactory.createWeapon(WeaponConfig.valuesFor[WeaponType.ROCKETLAUNCHER]!!)
+
+        player.getComponent(PlayerComponent::class.java).weapon = rocketlauncher
+
+        engine.addEntity(player)
+        engine.addEntity(rifle)
+        engine.addEntity(rocketlauncher)
+    }
+
+    /**
+     * Utility function
+     */
+    private fun clamp(value: Float, max: Float, min: Float): Float {
+        return if (value > min) {
+            if (value < max) {
+                value
+            } else max
+        } else min
+    }
 }

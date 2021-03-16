@@ -66,7 +66,7 @@ class WeaponSystem(private val camera: OrthographicCamera) :
         val y = ((sin(radians) * distanceToCenter) + ((weaponTransformComponent.position.y) + weaponTransformComponent.offset.y + weaponTransformComponent.originOffset.y)).toFloat()
         val spawnPointAroundWeapon = Vector3(x, y, 0.0f)
 
-        muzzleTransformComponent?.position?.set(spawnPointAroundWeapon)
+        muzzleTransformComponent?.position?.set(spawnPointAroundWeapon.x, spawnPointAroundWeapon.y, muzzleTransformComponent.position.z )
         muzzleTransformComponent?.rotation = weaponTransformComponent?.rotation!!
 
         if (muzzleAnimationComponent!!.animations[AnimationStateComponent.WEAPON_MUZZLE]!!.isAnimationFinished(muzzleAnimationStateComponent!!.time)) {

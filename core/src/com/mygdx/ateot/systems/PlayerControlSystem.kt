@@ -9,7 +9,6 @@ import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.math.Vector3
 import com.mygdx.ateot.components.*
 import com.mygdx.ateot.enums.Direction
-import com.mygdx.ateot.enums.GameEventType
 import com.mygdx.ateot.events.WeaponFireEvent
 import com.mygdx.ateot.helper.GameContext
 
@@ -31,6 +30,8 @@ class PlayerControlSystem(
     private val mapperAnimationStateComponent = ComponentMapper.getFor(AnimationStateComponent::class.java)
     private val mapperTransformComponent = ComponentMapper.getFor(TransformComponent::class.java)
 
+    private var fireDelay = 0.0f
+
     override fun processEntity(entity: Entity?, deltaTime: Float) {
 
         val playerComponent = mapperPlayerComponent.get(entity)
@@ -43,8 +44,8 @@ class PlayerControlSystem(
         val mouseX = unprojectedMouseCoords.x
         val mouseY = unprojectedMouseCoords.y
 
-        val weaponStateComponent = playerComponent.weapon?.getComponent(AnimationStateComponent::class.java)
-        val weaponTransformComponent = playerComponent.weapon?.getComponent(TransformComponent::class.java)
+        val weaponStateComponent = mapperAnimationStateComponent.get(playerComponent.weapon)
+        val weaponTransformComponent = mapperTransformComponent.get(playerComponent.weapon)
 
         if (mouseX > transformComponent.position.x && mouseY < transformComponent.position.y) {
             playerComponent.direction = Direction.DOWN_RIGHT
@@ -121,22 +122,25 @@ class PlayerControlSystem(
         weaponTransformComponent?.position?.y = bodyComponent.body.position.y
 
         if (playerComponent.direction == Direction.UP_LEFT || playerComponent.direction == Direction.UP_RIGHT) {
-            weaponTransformComponent?.position?.z = -0.1f
+            weaponTransformComponent?.position?.z = 0.5f
         } else {
-            weaponTransformComponent?.position?.z = 0.1f
+            weaponTransformComponent?.position?.z = 1.5f
         }
 
+        fireDelay -= Gdx.graphics.deltaTime
+
         if (inputHandler.leftMousePressed) {
-            inputHandler.leftMousePressed = false
 
-            val weaponComponent = playerComponent.weapon?.getComponent(WeaponComponent::class.java)
-            val muzzleTransformComponent = weaponComponent?.muzzle?.getComponent(TransformComponent::class.java)
-            val muzzleAnimationStateComponent = weaponComponent?.muzzle?.getComponent(AnimationStateComponent::class.java)
+            val weaponComponent = playerComponent.weapon?.getComponent(WeaponComponent::class.java)!!
+            val muzzleTransformComponent = mapperTransformComponent.get(weaponComponent.muzzle)!!
+            val muzzleAnimationStateComponent = mapperAnimationStateComponent.get(weaponComponent.muzzle)!!
 
-            muzzleAnimationStateComponent?.time = 0.0f
-            muzzleTransformComponent?.isHidden = false
-
-            eventHandler.publish(WeaponFireEvent(weaponTransformComponent!!))
+            if (fireDelay <= 0.0f) {
+                muzzleAnimationStateComponent.time = 0.0f
+                muzzleTransformComponent.isHidden = false
+                eventHandler.publish(WeaponFireEvent(playerComponent.weapon!!))
+                fireDelay = weaponComponent.fireRate
+            }
         }
     }
 }

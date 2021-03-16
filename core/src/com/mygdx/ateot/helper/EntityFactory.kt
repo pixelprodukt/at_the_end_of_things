@@ -7,9 +7,14 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.math.Vector3
 import com.mygdx.ateot.components.*
 import com.mygdx.ateot.constants.Assets
+import com.mygdx.ateot.constants.BulletConfig
+import com.mygdx.ateot.data.BulletDestroyedEventData
+import com.mygdx.ateot.data.WeaponConfigData
+import com.mygdx.ateot.enums.BulletType
 
-class EntityBuilder(private val engine: Engine, context: GameContext) {
+class EntityFactory(private val engine: Engine, context: GameContext) {
 
+    //private val packageName = "com.mygdx.ateot.components."
     private val assetHandler = context.assetHandler
 
     fun addEntityToEngine(entity: Entity) {
@@ -23,11 +28,17 @@ class EntityBuilder(private val engine: Engine, context: GameContext) {
     fun createPlayer(): Entity {
         val entity = engine.createEntity()
         val transformComponent = engine.createComponent(TransformComponent::class.java)
+        /*val clazz = Class.forName("${packageName}TransformComponent").newInstance().javaClass as Class<Component>
+        Gdx.app.log("EntityBuilder", "clazz: ${clazz}")
+        Gdx.app.log("EntityBuilder", "TransformComponent: ${TransformComponent::class.java}")
+        val transformComponent = engine.createComponent(clazz)*/
         val bodyComponent = engine.createComponent(BodyComponent::class.java)
         val textureComponent = engine.createComponent(TextureComponent::class.java)
         val playerComponent = engine.createComponent(PlayerComponent::class.java)
         val animationComponent = engine.createComponent(AnimationComponent::class.java)
         val animationStateComponent = engine.createComponent(AnimationStateComponent::class.java)
+
+        transformComponent.position.z = 1.0f
 
         bodyComponent.body.position.x = 100f
         bodyComponent.body.position.y = 60f
@@ -67,10 +78,6 @@ class EntityBuilder(private val engine: Engine, context: GameContext) {
         val playerTex: Texture = assetHandler.assets.get(Assets.PLAYER)
         textureComponent.region = TextureRegion(playerTex)
 
-        playerComponent.weapon = createWeapon()
-
-        engine.addEntity(playerComponent.weapon)
-
         entity.add(transformComponent)
         entity.add(bodyComponent)
         entity.add(textureComponent)
@@ -81,7 +88,7 @@ class EntityBuilder(private val engine: Engine, context: GameContext) {
         return entity
     }
 
-    private fun createWeapon(): Entity {
+    fun createWeapon(config: WeaponConfigData): Entity {
         val entity = engine.createEntity()
         val transform = engine.createComponent(TransformComponent::class.java)
         val animation = engine.createComponent(AnimationComponent::class.java)
@@ -89,18 +96,21 @@ class EntityBuilder(private val engine: Engine, context: GameContext) {
         val texture = engine.createComponent(TextureComponent::class.java)
         val weapon = engine.createComponent(WeaponComponent::class.java)
 
+        weapon.bulletType = config.bulletType
+        weapon.fireRate = config.fireRate
+
         animation.animations[AnimationStateComponent.WEAPON_ORIENTATION_RIGHT] = assetHandler.animationHelper.createAnimation(
-            assetHandler.assets.get(Assets.WEAPON_RIFLE), 0, 0, 16, 1, 0.2f)
+            assetHandler.assets.get(config.assetPath), 0, 0, 16, 1, 0.2f)
 
         animation.animations[AnimationStateComponent.WEAPON_ORIENTATION_LEFT] = assetHandler.animationHelper.createAnimation(
-            assetHandler.assets.get(Assets.WEAPON_RIFLE), 16, 0, 16, 1, 0.2f)
+            assetHandler.assets.get(config.assetPath), 16, 0, 16, 1, 0.2f)
 
         animationState.state = AnimationStateComponent.WEAPON_ORIENTATION_RIGHT
         animationState.isLooping = true
 
-        transform.position.z = 0.1f
+        transform.position.z = 0.2f
 
-        weapon.muzzle = createMuzzleFlash()
+        weapon.muzzle = createMuzzleFlash(config.assetPath)
 
         engine.addEntity(weapon.muzzle)
 
@@ -113,32 +123,7 @@ class EntityBuilder(private val engine: Engine, context: GameContext) {
         return entity
     }
 
-    fun createBullet(spawnTransform: TransformComponent, spawnVector: Vector3, targetVector: Vector3, spawnPointAroundWeapon: Vector3): Entity {
-
-        val entity = engine.createEntity()
-
-        val bulletComponent = engine.createComponent(BulletComponent::class.java)
-        bulletComponent.spawn = spawnVector
-        bulletComponent.target = targetVector
-        // Why do I have to set time on creation? If not, timeAlive is like a global for all bullets
-        bulletComponent.timeAlive = 0.0f
-
-        val transformComponent = engine.createComponent(TransformComponent::class.java)
-        transformComponent.position.set(spawnPointAroundWeapon)
-        transformComponent.rotation = spawnTransform.rotation
-
-        var textureComponent = engine.createComponent(TextureComponent::class.java)
-        val texture: Texture = assetHandler.assets.get(Assets.RIFLE_MUZZLE_BULLET)
-        textureComponent.region = TextureRegion(texture, 4 * 16, 0, 16, 16)
-
-        entity.add(bulletComponent)
-        entity.add(transformComponent)
-        entity.add(textureComponent)
-
-        return entity
-    }
-
-    fun createMuzzleFlash(): Entity {
+    private fun createMuzzleFlash(assetPath: String): Entity {
 
         val entity = engine.createEntity()
 
@@ -147,11 +132,11 @@ class EntityBuilder(private val engine: Engine, context: GameContext) {
         val animationComponent = engine.createComponent(AnimationComponent::class.java)
         val animationStateComponent = engine.createComponent(AnimationStateComponent::class.java)
 
-        transformComponent.position.z = 111.5f
-        transformComponent.isHidden = true
+        transformComponent.position.z = 2.0f
+        //transformComponent.isHidden = true
 
         animationComponent.animations[AnimationStateComponent.WEAPON_MUZZLE] = assetHandler.animationHelper.createAnimation(
-            assetHandler.assets.get(Assets.RIFLE_MUZZLE_BULLET), 0, 0, 16, 4, 0.025f)
+            assetHandler.assets.get(assetPath), 0, 16, 16, 4, 0.05f)
 
         animationStateComponent.state = AnimationStateComponent.WEAPON_MUZZLE
         animationStateComponent.time = 55f
@@ -164,7 +149,42 @@ class EntityBuilder(private val engine: Engine, context: GameContext) {
         return entity
     }
 
-    fun createExplosion(data: Vector3): Entity {
+    fun createBullet(rotation: Float, spawnCenter: Vector3, target: Vector3, spawnOnWeapon: Vector3, bulletType: BulletType): Entity {
+
+        val entity = engine.createEntity()
+
+        val bulletValues = BulletConfig.valuesFor[bulletType]!!
+
+        val bulletComponent = engine.createComponent(BulletComponent::class.java)
+        bulletComponent.spawn = spawnCenter
+        bulletComponent.target = target
+        bulletComponent.timeAlive = 0.0f
+        bulletComponent.maxLifetime = bulletValues.maxLifetime
+        bulletComponent.speed = bulletValues.speed
+        bulletComponent.type = bulletType
+
+        val transformComponent = engine.createComponent(TransformComponent::class.java)
+        transformComponent.position.set(spawnOnWeapon)
+        transformComponent.rotation = rotation
+
+        val weaponAsset = when (bulletType) {
+            BulletType.NONE -> null
+            BulletType.RIFLE_BULLET -> Assets.WEAPON_RIFLE
+            BulletType.ROCKET -> Assets.WEAPON_ROCKETLAUNCHER
+        }
+
+        var textureComponent = engine.createComponent(TextureComponent::class.java)
+        val texture: Texture = assetHandler.assets.get(weaponAsset)
+        textureComponent.region = TextureRegion(texture, 2 * 16, 0, 16, 16)
+
+        entity.add(bulletComponent)
+        entity.add(transformComponent)
+        entity.add(textureComponent)
+
+        return entity
+    }
+
+    fun createExplosion(data: BulletDestroyedEventData): Entity {
 
         val entity = engine.createEntity()
 
@@ -174,10 +194,22 @@ class EntityBuilder(private val engine: Engine, context: GameContext) {
         val animationComponent = engine.createComponent(AnimationComponent::class.java)
         val animationStateComponent = engine.createComponent(AnimationStateComponent::class.java)
 
-        transformComponent.position.set(data)
+        transformComponent.position.set(data.destroyedAtVector)
+
+        val explosionAsset = when (data.bulletType) {
+            BulletType.NONE -> null
+            BulletType.RIFLE_BULLET -> Assets.RIFLE_EXPLOSION
+            BulletType.ROCKET -> Assets.ROCKETLAUNCHER_EXPLOSION
+        }
+
+        val framesize = when (data.bulletType) {
+            BulletType.NONE -> 0
+            BulletType.RIFLE_BULLET -> 16
+            BulletType.ROCKET -> 32
+        }
 
         animationComponent.animations[AnimationStateComponent.WEAPON_EXPLOSION] = assetHandler.animationHelper.createAnimation(
-            assetHandler.assets.get(Assets.RIFLE_EXPLOSION), 0, 0, 16, 5, 0.05f)
+            assetHandler.assets.get(explosionAsset), 0, 0, framesize, 5, 0.05f)
 
         animationStateComponent.state = AnimationStateComponent.WEAPON_EXPLOSION
 
