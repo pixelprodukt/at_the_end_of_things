@@ -2,17 +2,19 @@ package com.mygdx.ateot.helper
 
 import com.badlogic.ashley.core.Engine
 import com.badlogic.ashley.core.Entity
+import com.badlogic.ashley.core.PooledEngine
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.math.Vector3
 import com.mygdx.ateot.components.*
 import com.mygdx.ateot.constants.Assets
 import com.mygdx.ateot.constants.BulletConfig
-import com.mygdx.ateot.data.BulletDestroyedEventData
+import com.mygdx.ateot.data.CreateExplosionEventData
 import com.mygdx.ateot.data.WeaponConfigData
 import com.mygdx.ateot.enums.BulletType
+import com.mygdx.ateot.enums.ExplosionType
 
-class EntityFactory(private val engine: Engine, context: GameContext) {
+class EntityFactory(private val engine: PooledEngine, context: GameContext) {
 
     //private val packageName = "com.mygdx.ateot.components."
     private val assetHandler = context.assetHandler
@@ -156,16 +158,24 @@ class EntityFactory(private val engine: Engine, context: GameContext) {
         val bulletValues = BulletConfig.valuesFor[bulletType]!!
 
         val bulletComponent = engine.createComponent(BulletComponent::class.java)
+        bulletComponent.damage = bulletValues.damage
         bulletComponent.spawn = spawnCenter
         bulletComponent.target = target
         bulletComponent.timeAlive = 0.0f
         bulletComponent.maxLifetime = bulletValues.maxLifetime
         bulletComponent.speed = bulletValues.speed
         bulletComponent.type = bulletType
+        bulletComponent.explosionType = bulletValues.explosionType
 
         val transformComponent = engine.createComponent(TransformComponent::class.java)
         transformComponent.position.set(spawnOnWeapon)
         transformComponent.rotation = rotation
+
+        val bodyComponent = engine.createComponent(BodyComponent::class.java)
+        bodyComponent.body.isSensor = true
+        bodyComponent.body.size.set(4.0f, 4.0f)
+        bodyComponent.body.offset.set(-2.0f, -2.0f)
+        bodyComponent.body.position.set(spawnOnWeapon.x, spawnOnWeapon.y)
 
         val weaponAsset = when (bulletType) {
             BulletType.NONE -> null
@@ -179,12 +189,13 @@ class EntityFactory(private val engine: Engine, context: GameContext) {
 
         entity.add(bulletComponent)
         entity.add(transformComponent)
+        entity.add(bodyComponent)
         entity.add(textureComponent)
 
         return entity
     }
 
-    fun createExplosion(data: BulletDestroyedEventData): Entity {
+    fun createExplosion(data: CreateExplosionEventData): Entity {
 
         val entity = engine.createEntity()
 
@@ -195,23 +206,24 @@ class EntityFactory(private val engine: Engine, context: GameContext) {
         val animationStateComponent = engine.createComponent(AnimationStateComponent::class.java)
 
         transformComponent.position.set(data.destroyedAtVector)
+        transformComponent.rotation = 0.0f
 
-        val explosionAsset = when (data.bulletType) {
-            BulletType.NONE -> null
-            BulletType.RIFLE_BULLET -> Assets.RIFLE_EXPLOSION
-            BulletType.ROCKET -> Assets.ROCKETLAUNCHER_EXPLOSION
+        val explosionAsset = when (data.explosionType) {
+            ExplosionType.BULLET -> Assets.BULLET_EXPLOSION
+            ExplosionType.ROCKET -> Assets.ROCKET_EXPLOSION
+            ExplosionType.BARREL -> Assets.BARREL_EXPLOSION
         }
 
-        val framesize = when (data.bulletType) {
-            BulletType.NONE -> 0
-            BulletType.RIFLE_BULLET -> 16
-            BulletType.ROCKET -> 32
+        val framesize = when (data.explosionType) {
+            ExplosionType.BULLET -> 16
+            ExplosionType.ROCKET -> 32
+            ExplosionType.BARREL -> 64
         }
 
-        animationComponent.animations[AnimationStateComponent.WEAPON_EXPLOSION] = assetHandler.animationHelper.createAnimation(
+        animationComponent.animations[AnimationStateComponent.EXPLOSION] = assetHandler.animationHelper.createAnimation(
             assetHandler.assets.get(explosionAsset), 0, 0, framesize, 5, 0.05f)
 
-        animationStateComponent.state = AnimationStateComponent.WEAPON_EXPLOSION
+        animationStateComponent.state = AnimationStateComponent.EXPLOSION
 
         entity.add(explosionComponent)
         entity.add(transformComponent)

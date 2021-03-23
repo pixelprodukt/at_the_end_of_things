@@ -48,12 +48,9 @@ class MapHandler {
                     isStatic = true
             )
 
-            if (rectangleMapObject.properties["isWall"] !== null) {
-                if (rectangleMapObject.properties["isWall"]!! as Boolean) {
-                    staticWallBodies.add(staticBody)
-                }
+            if (rectangleMapObject.properties["type"] == "wall_collision") {
+                staticWallBodies.add(staticBody)
             }
-
 
             staticMapBodies.add(staticBody)
         }

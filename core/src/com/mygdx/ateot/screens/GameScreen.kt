@@ -38,11 +38,11 @@ class GameScreen : Screen {
         engine.addSystem(renderingSystem)
         engine.addSystem(BodyDebugRenderingSystem(context, camera))
         engine.addSystem(TransformDebugRenderingSystem(context, camera))
-        engine.addSystem(PlayerControlSystem(context, camera))
-        engine.addSystem(WeaponSystem(camera))
-        engine.addSystem(CollisionSystem(context))
         engine.addSystem(BulletSystem(context, entityFactory, camera))
         engine.addSystem(ExplosionSystem(context, entityFactory))
+        engine.addSystem(PlayerControlSystem(context, camera))
+        engine.addSystem(WeaponSystem(camera))
+        engine.addSystem(CollisionSystem(context, entityFactory))
 
         Gdx.input.inputProcessor = context.inputHandler
 
@@ -87,7 +87,7 @@ class GameScreen : Screen {
         val rifle = entityFactory.createWeapon(WeaponConfig.valuesFor[WeaponType.RIFLE]!!)
         val rocketlauncher = entityFactory.createWeapon(WeaponConfig.valuesFor[WeaponType.ROCKETLAUNCHER]!!)
 
-        player.getComponent(PlayerComponent::class.java).weapon = rocketlauncher
+        player.getComponent(PlayerComponent::class.java).weapon = rifle
 
         engine.addEntity(player)
         engine.addEntity(rifle)

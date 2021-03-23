@@ -7,11 +7,12 @@ import com.badlogic.ashley.systems.IteratingSystem
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.math.Vector3
+import com.mygdx.ateot.components.BodyComponent
 import com.mygdx.ateot.components.BulletComponent
 import com.mygdx.ateot.components.TransformComponent
 import com.mygdx.ateot.components.WeaponComponent
-import com.mygdx.ateot.data.BulletDestroyedEventData
-import com.mygdx.ateot.events.BulletDestroyedEvent
+import com.mygdx.ateot.data.CreateExplosionEventData
+import com.mygdx.ateot.events.CreateExplosionEvent
 import com.mygdx.ateot.events.GameEventListener
 import com.mygdx.ateot.events.WeaponFireEvent
 import com.mygdx.ateot.helper.EntityFactory
@@ -27,9 +28,9 @@ class BulletSystem(
 ) :
     IteratingSystem(Family.all(BulletComponent::class.java).get()) {
 
-    private val mapHandler = context.mapHandler
     private val eventHandler = context.eventHandler
     private val mapperTransformComponent = ComponentMapper.getFor(TransformComponent::class.java)
+    private val mapperBodyComponent = ComponentMapper.getFor(BodyComponent::class.java)
     private val mapperBulletComponent = ComponentMapper.getFor(BulletComponent::class.java)
     private val mapperWeaponComponent = ComponentMapper.getFor(WeaponComponent::class.java)
 
@@ -78,33 +79,21 @@ class BulletSystem(
 
     override fun processEntity(entity: Entity?, deltaTime: Float) {
 
-        val transformComponent = mapperTransformComponent.get(entity)
         val bulletComponent = mapperBulletComponent.get(entity)
+        val bodyComponent = mapperBodyComponent.get(entity)
 
         val direction = Vector3().set(bulletComponent.target).sub(bulletComponent.spawn).nor()
         val velocity = Vector3().set(direction).scl(bulletComponent.speed)
 
-        // How do I get it to work that a bullet will add the current velocity of the player?
-        // So as the player you can't outrun even a slow bullet
-        // Edit: The current solution is more 'realistic'? Otherwise it could have some strange
-        // side effects like a later bullet outspeeding an earlier one
-        transformComponent.position.x += velocity.x
-        transformComponent.position.y += velocity.y
+        bodyComponent.body.velocity.x = velocity.x
+        bodyComponent.body.velocity.y = velocity.y
+        bodyComponent.body.position.x += bodyComponent.body.velocity.x
+        bodyComponent.body.position.y += bodyComponent.body.velocity.y
 
         bulletComponent.timeAlive += deltaTime
 
         if (bulletComponent.timeAlive >= bulletComponent.maxLifetime) {
-            engine.removeEntity(entity)
-        }
-
-        // Works but needs a distinction between map walls and other not-passable stuff (like water)
-        mapHandler.staticWallBodies.forEach { body ->
-
-            if (pointIntersectsWithBody(transformComponent.position, body)) {
-                val eventData = BulletDestroyedEventData(bulletComponent.type, transformComponent.position)
-                eventHandler.publish(BulletDestroyedEvent(eventData))
-                engine.removeEntity(entity)
-            }
+            entityFactory.removeFromEngine(entity!!)
         }
     }
 }

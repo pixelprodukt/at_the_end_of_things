@@ -42,12 +42,14 @@ class BodyDebugRenderingSystem(
 
                     val bodyComponent = mapperBodyComponent.get(entity)
 
-                    shapeRenderer.rect(
-                        bodyComponent.body.position.x + bodyComponent.body.offset.x,
-                        bodyComponent.body.position.y + bodyComponent.body.offset.y,
-                        bodyComponent.body.size.x,
-                        bodyComponent.body.size.y
-                    )
+                    if (bodyComponent != null) {
+                        shapeRenderer.rect(
+                            bodyComponent.body.position.x + bodyComponent.body.offset.x,
+                            bodyComponent.body.position.y + bodyComponent.body.offset.y,
+                            bodyComponent.body.size.x,
+                            bodyComponent.body.size.y
+                        )
+                    }
                 }
 
                 mapHandler.staticMapBodies.forEach { body ->

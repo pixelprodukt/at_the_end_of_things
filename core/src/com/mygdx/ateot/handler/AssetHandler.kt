@@ -15,8 +15,9 @@ class AssetHandler {
         load(Assets.WEAPON_HANDS, Texture::class.java)
         load(Assets.WEAPON_RIFLE, Texture::class.java)
         load(Assets.WEAPON_ROCKETLAUNCHER, Texture::class.java)
-        load(Assets.RIFLE_EXPLOSION, Texture::class.java)
-        load(Assets.ROCKETLAUNCHER_EXPLOSION, Texture::class.java)
+        load(Assets.BULLET_EXPLOSION, Texture::class.java)
+        load(Assets.ROCKET_EXPLOSION, Texture::class.java)
+        load(Assets.BARREL_EXPLOSION, Texture::class.java)
 
         finishLoading()
     }

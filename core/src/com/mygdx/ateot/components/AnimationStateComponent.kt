@@ -1,9 +1,9 @@
 package com.mygdx.ateot.components
 
 import com.badlogic.ashley.core.Component
-import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.utils.Pool
 
-class AnimationStateComponent : Component {
+class AnimationStateComponent : Component, Pool.Poolable {
 
     var state: Int? = null
         set(value) {
@@ -17,6 +17,12 @@ class AnimationStateComponent : Component {
     var time: Float = 0.0f
     var isLooping: Boolean = false
 
+    override fun reset() {
+        state = null
+        time = 0.0f
+        isLooping = false
+    }
+
     companion object {
         const val IDLE_DOWN_LEFT = 0
         const val IDLE_DOWN_RIGHT = 1
@@ -29,6 +35,6 @@ class AnimationStateComponent : Component {
         const val WEAPON_ORIENTATION_LEFT = 8
         const val WEAPON_ORIENTATION_RIGHT = 9
         const val WEAPON_MUZZLE = 10
-        const val WEAPON_EXPLOSION = 11
+        const val EXPLOSION = 11
     }
 }
