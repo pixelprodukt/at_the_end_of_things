@@ -1,10 +1,10 @@
 package com.mygdx.ateot.helper
 
-import com.badlogic.ashley.core.Engine
 import com.badlogic.ashley.core.Entity
 import com.badlogic.ashley.core.PooledEngine
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.TextureRegion
+import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
 import com.mygdx.ateot.components.*
 import com.mygdx.ateot.constants.Assets
@@ -13,11 +13,12 @@ import com.mygdx.ateot.data.CreateExplosionEventData
 import com.mygdx.ateot.data.WeaponConfigData
 import com.mygdx.ateot.enums.BulletType
 import com.mygdx.ateot.enums.ExplosionType
+import com.mygdx.ateot.handler.AssetHandler
 
-class EntityFactory(private val engine: PooledEngine, context: GameContext) {
+class EntityFactory(private val engine: PooledEngine, private val assetHandler: AssetHandler) {
 
-    //private val packageName = "com.mygdx.ateot.components."
-    private val assetHandler = context.assetHandler
+    // private val packageName = "com.mygdx.ateot.components."
+    // private val assetHandler = context.assetHandler
 
     fun addEntityToEngine(entity: Entity) {
         engine.addEntity(entity)
@@ -34,19 +35,22 @@ class EntityFactory(private val engine: PooledEngine, context: GameContext) {
         Gdx.app.log("EntityBuilder", "clazz: ${clazz}")
         Gdx.app.log("EntityBuilder", "TransformComponent: ${TransformComponent::class.java}")
         val transformComponent = engine.createComponent(clazz)*/
-        val bodyComponent = engine.createComponent(BodyComponent::class.java)
+
+        val bodyComponent = engine.createComponent(BodyComponent::class.java).apply {
+            body.position.set(100f, 60f)
+            body.size.set(8f, 8f)
+            body.offset.set(-4f, -7f)
+            isCollision = true
+            isStatic = false
+        }
+
         val textureComponent = engine.createComponent(TextureComponent::class.java)
         val playerComponent = engine.createComponent(PlayerComponent::class.java)
+        val hitpointsComponent = engine.createComponent(HitpointsComponent::class.java)
         val animationComponent = engine.createComponent(AnimationComponent::class.java)
         val animationStateComponent = engine.createComponent(AnimationStateComponent::class.java)
 
         transformComponent.position.z = 1.0f
-
-        bodyComponent.body.position.x = 100f
-        bodyComponent.body.position.y = 60f
-
-        bodyComponent.body.size.set(8f, 8f)
-        bodyComponent.body.offset.set(-4f, -7f)
 
         animationComponent.animations[AnimationStateComponent.IDLE_DOWN_RIGHT] =
             assetHandler.animationHelper.createAnimation(
@@ -135,7 +139,6 @@ class EntityFactory(private val engine: PooledEngine, context: GameContext) {
         val animationStateComponent = engine.createComponent(AnimationStateComponent::class.java)
 
         transformComponent.position.z = 2.0f
-        //transformComponent.isHidden = true
 
         animationComponent.animations[AnimationStateComponent.WEAPON_MUZZLE] = assetHandler.animationHelper.createAnimation(
             assetHandler.assets.get(assetPath), 0, 16, 16, 4, 0.05f)
@@ -171,11 +174,13 @@ class EntityFactory(private val engine: PooledEngine, context: GameContext) {
         transformComponent.position.set(spawnOnWeapon)
         transformComponent.rotation = rotation
 
-        val bodyComponent = engine.createComponent(BodyComponent::class.java)
-        bodyComponent.body.isSensor = true
-        bodyComponent.body.size.set(4.0f, 4.0f)
-        bodyComponent.body.offset.set(-2.0f, -2.0f)
-        bodyComponent.body.position.set(spawnOnWeapon.x, spawnOnWeapon.y)
+        val bodyComponent = engine.createComponent(BodyComponent::class.java).apply {
+            body.size.set(4.0f, 4.0f)
+            body.offset.set(-2.0f, -2.0f)
+            body.position.set(spawnOnWeapon.x, spawnOnWeapon.y)
+            isCollision = false
+            isStatic = false
+        }
 
         val weaponAsset = when (bulletType) {
             BulletType.NONE -> null
@@ -201,11 +206,23 @@ class EntityFactory(private val engine: PooledEngine, context: GameContext) {
 
         val explosionComponent = engine.createComponent(ExplosionComponent::class.java)
         val transformComponent = engine.createComponent(TransformComponent::class.java)
+
+        val bodyComponent = engine.createComponent(BodyComponent::class.java).apply {
+            /**
+             * TODO: build with config values
+             */
+            body.position.set(data.spawn.x, data.spawn.y)
+            body.offset.set(-16.0f, -16.0f)
+            body.size.set(32.0f, 32.0f)
+            isCollision = false
+            isStatic = true
+        }
+
         var textureComponent = engine.createComponent(TextureComponent::class.java)
         val animationComponent = engine.createComponent(AnimationComponent::class.java)
         val animationStateComponent = engine.createComponent(AnimationStateComponent::class.java)
 
-        transformComponent.position.set(data.destroyedAtVector)
+        transformComponent.position.set(data.spawn)
         transformComponent.rotation = 0.0f
 
         val explosionAsset = when (data.explosionType) {
@@ -227,10 +244,75 @@ class EntityFactory(private val engine: PooledEngine, context: GameContext) {
 
         entity.add(explosionComponent)
         entity.add(transformComponent)
+        entity.add(bodyComponent)
         entity.add(textureComponent)
         entity.add(animationComponent)
         entity.add(animationStateComponent)
 
         return entity
+    }
+
+    fun createExplosiveBarrel(spawn: Vector2) {
+
+        val entity = engine.createEntity()
+
+        val barrelComponent = engine.createComponent(BarrelComponent::class.java)
+
+        val bodyComponent = engine.createComponent(BodyComponent::class.java).apply {
+            body.size.set(16.0f, 8.0f)
+            body.position.set(spawn.x - (body.size.x / 2), spawn.y - (body.size.y / 2))
+            body.offset.set(0.0f, -4.0f)
+            isCollision = true
+            isStatic = true
+            isHitable = true
+        }
+
+        val hitpointsComponent = engine.createComponent(HitpointsComponent::class.java).apply {
+            hitpoints = 50
+        }
+
+        val transformComponent = engine.createComponent(TransformComponent::class.java).apply {
+            position.set(spawn.x, spawn.y, 0f)
+        }
+        val textureComponent = engine.createComponent(TextureComponent::class.java)
+
+        val animationComponent = engine.createComponent(AnimationComponent::class.java).apply {
+            animations[AnimationStateComponent.STATIC_IDLE] = assetHandler.animationHelper.createAnimation(
+                assetHandler.assets.get(Assets.EXPLOSIVE_BARRELS), 0, 0, 16, 1, 0.05f)
+            animations[AnimationStateComponent.DEATH] = assetHandler.animationHelper.createAnimation(
+                assetHandler.assets.get(Assets.EXPLOSIVE_BARRELS), 16, 0, 16, 1, 0.05f)
+        }
+
+        val animationStateComponent = engine.createComponent(AnimationStateComponent::class.java).apply {
+            isLooping = false
+            state = AnimationStateComponent.STATIC_IDLE
+        }
+
+        entity.add(barrelComponent)
+        entity.add(bodyComponent)
+        entity.add(hitpointsComponent)
+        entity.add(transformComponent)
+        entity.add(textureComponent)
+        entity.add(animationComponent)
+        entity.add(animationStateComponent)
+
+        engine.addEntity(entity)
+    }
+
+    fun createCollisionEntity(position: Vector2, size: Vector2, isWall: Boolean) {
+
+        val entity = engine.createEntity()
+
+        val bodyComponent = engine.createComponent(BodyComponent::class.java).apply {
+            body.position.set(position)
+            body.size.set(size)
+            this.isHitable = isWall
+            isCollision = true
+            isStatic = true
+        }
+
+        entity.add(bodyComponent)
+
+        engine.addEntity(entity)
     }
 }

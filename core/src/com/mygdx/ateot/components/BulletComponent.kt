@@ -12,7 +12,7 @@ class BulletComponent : Component, Pool.Poolable {
 
     var type = BulletType.NONE
     var explosionType = ExplosionType.BULLET
-    var damage = 0
+    var damage = 0 // TODO: maybe a DamageComponent would be better? There could be much more stuff be dealing damage
     var speed = 5.0f
     var maxLifetime = 1.0f
     var timeAlive = 0.0f

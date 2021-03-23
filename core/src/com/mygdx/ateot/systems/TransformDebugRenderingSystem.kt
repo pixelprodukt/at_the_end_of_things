@@ -55,6 +55,8 @@ class TransformDebugRenderingSystem(
                 }
             }
         }
+
+        renderQueue.clear()
     }
 
     override fun processEntity(entity: Entity?, deltaTime: Float) {

@@ -19,6 +19,9 @@ class AssetHandler {
         load(Assets.ROCKET_EXPLOSION, Texture::class.java)
         load(Assets.BARREL_EXPLOSION, Texture::class.java)
 
+        load(Assets.ENEMY_FLESHBLOB, Texture::class.java)
+        load(Assets.EXPLOSIVE_BARRELS, Texture::class.java)
+
         finishLoading()
     }
 }

@@ -9,12 +9,12 @@ class Body(
     val position: Vector2,
     val size: Vector2,
     val velocity: Vector2 = Vector2(0f, 0f),
-    var isSensor: Boolean = false,
-    var isStatic: Boolean = false,
+    /*var isSensor: Boolean = false,
+    var isStatic: Boolean = false,*/
     val offset: Vector2 = Vector2(0f, 0f),
-) {
+) /*{
     val center get() = Vector2(position.x + (size.x / 2), position.y + (size.y / 2))
-}
+}*/
 
 fun resolveCollision(b1: Body, b2: Body) {
 
@@ -84,10 +84,10 @@ fun solveCollision(a: Body, b: Body, sVec: Vector2) {
 }
 
 fun intersect(b1: Body, b2: Body): Boolean {
-    return (b1.position.x < b2.position.x + b2.size.x &&
-            b1.position.x + b1.size.x > b2.position.x &&
-            b1.position.y < b2.position.y + b2.size.y &&
-            b1.position.y + b1.size.y > b2.position.y)
+    return (b1.position.x + b1.offset.x < b2.position.x + b2.offset.x + b2.size.x &&
+            b1.position.x + b1.offset.x + b1.size.x > b2.position.x + b2.offset.x &&
+            b1.position.y + b1.offset.y < b2.position.y + b2.size.y + b2.offset.y &&
+            b1.position.y + b1.offset.y + b1.size.y > b2.position.y + b2.offset.y)
 }
 
 fun pointIntersectsWithBody(point: Vector3, b2: Body): Boolean {

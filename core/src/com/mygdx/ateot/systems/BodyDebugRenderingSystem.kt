@@ -52,11 +52,13 @@ class BodyDebugRenderingSystem(
                     }
                 }
 
-                mapHandler.staticMapBodies.forEach { body ->
+                /*mapHandler.staticMapBodies.forEach { body ->
                     shapeRenderer.rect(body.position.x, body.position.y, body.size.x, body.size.y)
-                }
+                }*/
             }
         }
+
+        renderQueue.clear()
     }
 
     override fun processEntity(entity: Entity?, deltaTime: Float) {

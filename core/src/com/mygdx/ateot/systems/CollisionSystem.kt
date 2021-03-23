@@ -8,7 +8,6 @@ import com.badlogic.gdx.Gdx
 import com.mygdx.ateot.components.*
 import com.mygdx.ateot.data.CreateExplosionEventData
 import com.mygdx.ateot.events.CreateExplosionEvent
-import com.mygdx.ateot.handler.MapHandler
 import com.mygdx.ateot.helper.*
 
 class CollisionSystem(context: GameContext, private val entityFactory: EntityFactory) :
@@ -16,7 +15,14 @@ class CollisionSystem(context: GameContext, private val entityFactory: EntityFac
 
     private val mapHandler = context.mapHandler
     private val eventHandler = context.eventHandler
-    private val collisionQueue = mutableListOf<Entity>()
+
+    private val staticCollisionQueue = mutableListOf<Entity>()
+    private val dynamicCollisionQueue = mutableListOf<Entity>()
+    private val sensorCollisionQueue = mutableListOf<Entity>()
+    private val wallCollisionQueue = mutableListOf<Entity>()
+    private val floorCollisionQueue = mutableListOf<Entity>()
+    private val bulletCollisionQueue = mutableListOf<Entity>()
+
     private val mapperBodyComponent = ComponentMapper.getFor(BodyComponent::class.java)
     private val mapperTransformComponent = ComponentMapper.getFor(TransformComponent::class.java)
     private val mapperPlayerComponent = ComponentMapper.getFor(PlayerComponent::class.java)
@@ -25,54 +31,97 @@ class CollisionSystem(context: GameContext, private val entityFactory: EntityFac
     override fun update(deltaTime: Float) {
         super.update(deltaTime)
 
-        collisionQueue.forEach { entity ->
-            mapHandler.staticMapBodies.forEach { body ->
+        /**
+         * collision for movable objects with static mapbodies
+         */
+        staticCollisionQueue.forEach { staticCollisionEntity ->
 
-                val entityBody = mapperBodyComponent.get(entity)?.body
-                val entityTransformComponent = mapperTransformComponent.get(entity)
+            val staticBody = mapperBodyComponent.get(staticCollisionEntity).body
 
-                if (entityBody != null) {
+            dynamicCollisionQueue.forEach { dynamicCollisionEntity ->
 
-                    if (!entityBody.isSensor) {
-                        resolveCollision(entityBody, body)
-                    }
+                val dynamicBody = mapperBodyComponent.get(dynamicCollisionEntity).body
+                val dynamicTransformComponent = mapperTransformComponent.get(dynamicCollisionEntity)
 
-                    if (mapperBulletComponent.get(entity) != null) {
+                resolveCollision(dynamicBody, staticBody)
 
-                        val bulletComponent = mapperBulletComponent.get(entity)
-                        val transformComponent = mapperTransformComponent.get(entity)
-
-                        if (intersect(entityBody, body)) {
-                            val eventData = CreateExplosionEventData(bulletComponent.explosionType, transformComponent.position)
-                            eventHandler.publish(CreateExplosionEvent(eventData))
-                            entityFactory.removeFromEngine(entity)
-                        }
-                    }
-
-                    entityTransformComponent.position.x = entityBody.position.x
-                    entityTransformComponent.position.y = entityBody.position.y
-                }
+                dynamicTransformComponent.position.x = dynamicBody.position.x
+                dynamicTransformComponent.position.y = dynamicBody.position.y
 
                 /**
                  * Check if entity has the PlayerComponent and set transform of weapon entity to body's transform
                  */
-                if (mapperPlayerComponent.get(entity) != null) {
-                    val playerComponent = mapperPlayerComponent.get(entity)
+                if (mapperPlayerComponent.get(dynamicCollisionEntity) != null) {
+                    val playerComponent = mapperPlayerComponent.get(dynamicCollisionEntity)
 
                     if (playerComponent.weapon != null) {
                         val weaponTransform = mapperTransformComponent.get(playerComponent.weapon)
 
-                        weaponTransform.position.x = entityBody!!.position.x
-                        weaponTransform.position.y = entityBody!!.position.y
+                        weaponTransform.position.x = dynamicBody!!.position.x
+                        weaponTransform.position.y = dynamicBody!!.position.y
                     }
                 }
             }
         }
 
-        collisionQueue.clear()
+        /**
+         * bulletcollisions are handled here
+         */
+        bulletCollisionQueue.forEach { bulletEntity ->
+
+            wallCollisionQueue.forEach { wallCollisionEntity ->
+
+                val staticBody = mapperBodyComponent.get(wallCollisionEntity).body
+                val bulletBody = mapperBodyComponent.get(bulletEntity).body
+                val bulletComponent = mapperBulletComponent.get(bulletEntity)
+                val transformComponent = mapperTransformComponent.get(bulletEntity)
+
+                if (intersect(bulletBody, staticBody)) {
+                    val eventData =
+                        CreateExplosionEventData(bulletComponent.explosionType, transformComponent.position)
+                    eventHandler.publish(CreateExplosionEvent(eventData))
+                    entityFactory.removeFromEngine(bulletEntity)
+                }
+
+                transformComponent.position.x = bulletBody.position.x
+                transformComponent.position.y = bulletBody.position.y
+            }
+        }
+
+        staticCollisionQueue.clear()
+        dynamicCollisionQueue.clear()
+        sensorCollisionQueue.clear()
+        wallCollisionQueue.clear()
+        floorCollisionQueue.clear()
+        bulletCollisionQueue.clear()
     }
 
     override fun processEntity(entity: Entity?, deltaTime: Float) {
-        collisionQueue.add(entity!!)
+
+        if (entity != null) {
+
+            val bodyComponent = mapperBodyComponent.get(entity)
+            val bulletComponent = mapperBulletComponent.get(entity)
+
+            if (bodyComponent.isCollision && bodyComponent.isStatic && bodyComponent.isHitable) {
+                staticCollisionQueue.add(entity)
+                wallCollisionQueue.add(entity)
+            }
+
+            if (bodyComponent.isCollision && bodyComponent.isStatic && !bodyComponent.isHitable) {
+                staticCollisionQueue.add(entity)
+                floorCollisionQueue.add(entity)
+            }
+
+            if (bodyComponent.isCollision && !bodyComponent.isStatic && !bodyComponent.isHitable) {
+                dynamicCollisionQueue.add(entity)
+            }
+
+            if (!bodyComponent.isCollision && bulletComponent != null) {
+                bulletCollisionQueue.add(entity)
+                //Gdx.app.log("CollisionSystem", "Bullet added: ${entity}")
+            }
+        }
+
     }
 }

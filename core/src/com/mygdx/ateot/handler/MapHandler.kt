@@ -1,12 +1,15 @@
 package com.mygdx.ateot.handler
 
+import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.maps.objects.RectangleMapObject
 import com.badlogic.gdx.maps.tiled.TiledMap
 import com.badlogic.gdx.maps.tiled.TmxMapLoader
+import com.badlogic.gdx.maps.tiled.objects.TiledMapTileMapObject
 import com.badlogic.gdx.math.Vector2
 import com.mygdx.ateot.helper.Body
+import com.mygdx.ateot.helper.EntityFactory
 
-class MapHandler {
+class MapHandler(private val entityFactory: EntityFactory) {
 
     private val mapLoader = TmxMapLoader()
 
@@ -17,13 +20,13 @@ class MapHandler {
     var currentMapHeight: Int = 0
         private set
 
-    val staticMapBodies = mutableListOf<Body>()
-    val staticWallBodies = mutableListOf<Body>()
+    //val staticMapBodies = mutableListOf<Body>()
+    //val staticWallBodies = mutableListOf<Body>()
 
     fun loadMap(mapName: String) {
 
-        staticMapBodies.clear()
-        staticWallBodies.clear()
+        //staticMapBodies.clear()
+        //staticWallBodies.clear()
 
         val tiledMap = mapLoader.load("maps/$mapName.tmx")
 
@@ -31,6 +34,17 @@ class MapHandler {
         currentMapWidth = currentTiledMap.properties["width"] as Int * currentTiledMap.properties["tilewidth"] as Int
         currentMapHeight = currentTiledMap.properties["height"] as Int * currentTiledMap.properties["tileheight"] as Int
         initStaticBodies(currentTiledMap)
+        initStaticObjects(currentTiledMap)
+    }
+
+    private fun initStaticObjects(map: TiledMap) {
+
+        val rectangleList = map.layers.get("gameobjects")?.objects?.getByType(TiledMapTileMapObject::class.java)
+            ?: throw Exception("No gameobjects layer found")
+
+        rectangleList.forEach { mapObject ->
+            entityFactory.createExplosiveBarrel(Vector2(mapObject.x + (mapObject.properties["width"] as Float / 2), mapObject.y + (mapObject.properties["height"] as Float / 2)))
+        }
     }
 
     private fun initStaticBodies(map: TiledMap) {
@@ -42,17 +56,13 @@ class MapHandler {
 
             val rect = rectangleMapObject.rectangle
 
-            val staticBody = Body(
-                    Vector2(rect.x, rect.y),
-                    Vector2(rect.width, rect.height),
-                    isStatic = true
-            )
-
             if (rectangleMapObject.properties["type"] == "wall_collision") {
-                staticWallBodies.add(staticBody)
+                entityFactory.createCollisionEntity(Vector2(rect.x, rect.y), Vector2(rect.width, rect.height), true)
             }
 
-            staticMapBodies.add(staticBody)
+            if (rectangleMapObject.properties["type"] == "floor_collision") {
+                entityFactory.createCollisionEntity(Vector2(rect.x, rect.y), Vector2(rect.width, rect.height), false)
+            }
         }
     }
 }

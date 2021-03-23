@@ -1,5 +1,6 @@
 package com.mygdx.ateot.helper
 
+import com.badlogic.ashley.core.PooledEngine
 import com.mygdx.ateot.handler.AssetHandler
 import com.mygdx.ateot.handler.EventHandler
 import com.mygdx.ateot.handler.InputHandler
@@ -14,5 +15,9 @@ class GameContext {
     val eventHandler = EventHandler()
     val assetHandler = AssetHandler()
     val inputHandler = InputHandler()
-    val mapHandler = MapHandler().apply { loadMap("ateot_testmap") }
+
+    val engine = PooledEngine()
+    val entityFactory = EntityFactory(engine, assetHandler)
+
+    val mapHandler = MapHandler(entityFactory).apply { loadMap("ateot_testmap") }
 }

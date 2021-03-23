@@ -10,4 +10,8 @@ object Assets {
     const val WEAPON_ROCKETLAUNCHER = "spritesheets/rocketlauncher_spritesheet.png"
     const val ROCKET_EXPLOSION = "spritesheets/rocketlauncher_explosion.png"
     const val BARREL_EXPLOSION = "spritesheets/explosion01_spritesheet.png"
+
+    const val ENEMY_FLESHBLOB = "spritesheets/enemies/fleshblob_spritesheet.png"
+
+    const val EXPLOSIVE_BARRELS = "spritesheets/objects/explosive_barrels.png"
 }

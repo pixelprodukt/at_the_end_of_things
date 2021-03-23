@@ -11,16 +11,27 @@ class ZComparator : Comparator<Entity> {
 
     override fun compare(entityA: Entity?, entityB: Entity?): Int {
 
+        val ay = mapperTransformComponent.get(entityA).position.y
+        val by = mapperTransformComponent.get(entityB).position.y
         val az = mapperTransformComponent.get(entityA).position.z
         val bz = mapperTransformComponent.get(entityB).position.z
 
         var result = 0
 
-        if (az > bz) {
-            result = 1
-        } else if (az < bz) {
+        if (ay > by) {
             result = -1
+        } else if (ay < by) {
+            result = 1
         }
+
+        /*if (!az.equals(0) || !bz.equals(0)) {
+            if (az > bz) {
+                result = 1
+            } else if (az < bz) {
+                result = -1
+            }
+        }*/
+
         return result
     }
 

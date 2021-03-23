@@ -25,11 +25,11 @@ class GameScreen : Screen {
     private val batch = SpriteBatch()
     private val renderingSystem = RenderingSystem(batch)
     private val camera = renderingSystem.camera
-    private val engine = PooledEngine()
+    private val engine = context.engine
     private val mapRenderer = OrthogonalTiledMapRenderer(context.mapHandler.currentTiledMap)
     private var playerEntity: ImmutableArray<Entity>?
     private var playerTransformComponent: TransformComponent?
-    private val entityFactory = EntityFactory(engine, context)
+    private val entityFactory = context.entityFactory // EntityFactory(engine, context)
 
     init {
         batch.projectionMatrix = camera.combined

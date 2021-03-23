@@ -23,6 +23,7 @@ class AnimationStateComponent : Component, Pool.Poolable {
         isLooping = false
     }
 
+    // TODO: make as enum
     companion object {
         const val IDLE_DOWN_LEFT = 0
         const val IDLE_DOWN_RIGHT = 1
@@ -36,5 +37,11 @@ class AnimationStateComponent : Component, Pool.Poolable {
         const val WEAPON_ORIENTATION_RIGHT = 9
         const val WEAPON_MUZZLE = 10
         const val EXPLOSION = 11
+        const val DEATH = 12
+        const val DEATH_DOWN_LEFT = 13
+        const val DEATH_DOWN_RIGHT = 14
+        const val DEATH_UP_LEFT = 15
+        const val DEATH_UP_RIGHT = 16
+        const val STATIC_IDLE = 17
     }
 }
