@@ -39,7 +39,6 @@ class RenderingSystem(private val batch: SpriteBatch) : SortedIteratingSystem(
         super.update(deltaTime)
 
         renderQueue.sortWith(comparator)
-        //Gdx.app.log("RenderingSystem", "${renderQueue.size}")
         camera.update()
 
         batch.projectionMatrix = camera.combined

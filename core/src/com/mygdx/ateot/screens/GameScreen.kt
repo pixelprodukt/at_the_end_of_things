@@ -43,6 +43,7 @@ class GameScreen : Screen {
         engine.addSystem(PlayerControlSystem(context, camera))
         engine.addSystem(WeaponSystem(camera))
         engine.addSystem(CollisionSystem(context, entityFactory))
+        engine.addSystem(HitpointsSystem(context))
 
         Gdx.input.inputProcessor = context.inputHandler
 

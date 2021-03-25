@@ -9,6 +9,7 @@ import com.badlogic.gdx.math.Vector3
 import com.mygdx.ateot.components.*
 import com.mygdx.ateot.constants.Assets
 import com.mygdx.ateot.constants.BulletConfig
+import com.mygdx.ateot.constants.ExplosionConfig
 import com.mygdx.ateot.data.CreateExplosionEventData
 import com.mygdx.ateot.data.WeaponConfigData
 import com.mygdx.ateot.enums.BulletType
@@ -182,14 +183,8 @@ class EntityFactory(private val engine: PooledEngine, private val assetHandler: 
             isStatic = false
         }
 
-        val weaponAsset = when (bulletType) {
-            BulletType.NONE -> null
-            BulletType.RIFLE_BULLET -> Assets.WEAPON_RIFLE
-            BulletType.ROCKET -> Assets.WEAPON_ROCKETLAUNCHER
-        }
-
         var textureComponent = engine.createComponent(TextureComponent::class.java)
-        val texture: Texture = assetHandler.assets.get(weaponAsset)
+        val texture: Texture = assetHandler.assets.get(bulletValues.asset)
         textureComponent.region = TextureRegion(texture, 2 * 16, 0, 16, 16)
 
         entity.add(bulletComponent)
@@ -204,18 +199,20 @@ class EntityFactory(private val engine: PooledEngine, private val assetHandler: 
 
         val entity = engine.createEntity()
 
-        val explosionComponent = engine.createComponent(ExplosionComponent::class.java)
+        val explosionValues = ExplosionConfig.valuesFor[data.explosionType]!!
+
+        val explosionComponent = engine.createComponent(ExplosionComponent::class.java).apply {
+            damage = explosionValues.damage
+        }
+
         val transformComponent = engine.createComponent(TransformComponent::class.java)
 
         val bodyComponent = engine.createComponent(BodyComponent::class.java).apply {
-            /**
-             * TODO: build with config values
-             */
-            body.position.set(data.spawn.x, data.spawn.y)
-            body.offset.set(-16.0f, -16.0f)
-            body.size.set(32.0f, 32.0f)
+            body.size.set(explosionValues.bodySize)
+            body.position.set(data.spawn.x - (body.size.x / 2), data.spawn.y - (body.size.y / 2))
             isCollision = false
             isStatic = true
+            isActiveAsHitbox = false
         }
 
         var textureComponent = engine.createComponent(TextureComponent::class.java)
@@ -225,20 +222,8 @@ class EntityFactory(private val engine: PooledEngine, private val assetHandler: 
         transformComponent.position.set(data.spawn)
         transformComponent.rotation = 0.0f
 
-        val explosionAsset = when (data.explosionType) {
-            ExplosionType.BULLET -> Assets.BULLET_EXPLOSION
-            ExplosionType.ROCKET -> Assets.ROCKET_EXPLOSION
-            ExplosionType.BARREL -> Assets.BARREL_EXPLOSION
-        }
-
-        val framesize = when (data.explosionType) {
-            ExplosionType.BULLET -> 16
-            ExplosionType.ROCKET -> 32
-            ExplosionType.BARREL -> 64
-        }
-
         animationComponent.animations[AnimationStateComponent.EXPLOSION] = assetHandler.animationHelper.createAnimation(
-            assetHandler.assets.get(explosionAsset), 0, 0, framesize, 5, 0.05f)
+            assetHandler.assets.get(explosionValues.asset), 0, 0, explosionValues.frameSize, 5, 0.05f)
 
         animationStateComponent.state = AnimationStateComponent.EXPLOSION
 
@@ -268,7 +253,7 @@ class EntityFactory(private val engine: PooledEngine, private val assetHandler: 
         }
 
         val hitpointsComponent = engine.createComponent(HitpointsComponent::class.java).apply {
-            hitpoints = 50
+            hitpoints = 20
         }
 
         val transformComponent = engine.createComponent(TransformComponent::class.java).apply {

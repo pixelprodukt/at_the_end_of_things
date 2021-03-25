@@ -9,8 +9,8 @@ object BulletConfig {
     val valuesFor: HashMap<BulletType, BulletConfigData> = hashMapOf()
 
     init {
-        valuesFor[BulletType.RIFLE_BULLET] = BulletConfigData(10, ExplosionType.BULLET, 5.0f, 5.0f)
-        valuesFor[BulletType.ROCKET] = BulletConfigData(40, ExplosionType.ROCKET, 1.5f, 10.0f)
+        valuesFor[BulletType.RIFLE_BULLET] = BulletConfigData(0, ExplosionType.BULLET, 5.0f, 5.0f, Assets.WEAPON_RIFLE)
+        valuesFor[BulletType.ROCKET] = BulletConfigData(70, ExplosionType.ROCKET, 1.5f, 10.0f, Assets.WEAPON_ROCKETLAUNCHER)
     }
 }
 

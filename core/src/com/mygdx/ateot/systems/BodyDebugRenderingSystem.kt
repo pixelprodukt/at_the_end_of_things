@@ -21,7 +21,6 @@ class BodyDebugRenderingSystem(
 ) :
     IteratingSystem(Family.all(BodyComponent::class.java).get()) {
 
-    private val mapHandler = context.mapHandler
     private val inputHandler = context.inputHandler
     private val shapeRenderer = ShapeRenderer()
     private val mapperBodyComponent = ComponentMapper.getFor(BodyComponent::class.java)
@@ -43,6 +42,11 @@ class BodyDebugRenderingSystem(
                     val bodyComponent = mapperBodyComponent.get(entity)
 
                     if (bodyComponent != null) {
+
+                        if (bodyComponent.isActiveAsHitbox) {
+                            shapeRenderer.color = Color.RED
+                        }
+
                         shapeRenderer.rect(
                             bodyComponent.body.position.x + bodyComponent.body.offset.x,
                             bodyComponent.body.position.y + bodyComponent.body.offset.y,
@@ -51,10 +55,6 @@ class BodyDebugRenderingSystem(
                         )
                     }
                 }
-
-                /*mapHandler.staticMapBodies.forEach { body ->
-                    shapeRenderer.rect(body.position.x, body.position.y, body.size.x, body.size.y)
-                }*/
             }
         }
 

@@ -12,6 +12,7 @@ class BodyComponent : Component, Pool.Poolable {
     var isCollision = true
     var isStatic = true
     var isHitable = false
+    var isActiveAsHitbox = false
 
     override fun reset() {
         body.position.set(0.0f, 0.0f)
@@ -21,5 +22,6 @@ class BodyComponent : Component, Pool.Poolable {
         isCollision = true
         isStatic = true
         isHitable = false
+        isActiveAsHitbox = false
     }
 }

@@ -6,5 +6,6 @@ data class BulletConfigData(
     val damage: Int,
     val explosionType: ExplosionType,
     val speed: Float,
-    val maxLifetime: Float
+    val maxLifetime: Float,
+    val asset: String
 )
