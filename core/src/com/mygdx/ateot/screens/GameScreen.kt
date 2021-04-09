@@ -8,6 +8,7 @@ import com.badlogic.ashley.utils.ImmutableArray
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Screen
 import com.badlogic.gdx.graphics.GL20
+import com.badlogic.gdx.graphics.Pixmap
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer
 import com.mygdx.ateot.components.*
@@ -31,18 +32,29 @@ class GameScreen : Screen {
     private var playerTransformComponent: TransformComponent?
     private val entityFactory = context.entityFactory // EntityFactory(engine, context)
 
+    private val pixmap = Pixmap(Gdx.files.internal("cursor.png"))
+    private val xHotspot = (pixmap.width / 2)
+    private val yHotspot = (pixmap.height / 2)
+
+    private val cursor = Gdx.graphics.newCursor(pixmap, xHotspot, yHotspot)
+
     init {
+        Gdx.graphics.setCursor(cursor)
+
         batch.projectionMatrix = camera.combined
 
         engine.addSystem(AnimationSystem())
         engine.addSystem(renderingSystem)
         engine.addSystem(BodyDebugRenderingSystem(context, camera))
+        engine.addSystem(RenderingOrderTransformDebugSystem(context, camera))
         engine.addSystem(TransformDebugRenderingSystem(context, camera))
-        engine.addSystem(BulletSystem(context, entityFactory, camera))
         engine.addSystem(ExplosionSystem(context, entityFactory))
         engine.addSystem(PlayerControlSystem(context, camera))
         engine.addSystem(WeaponSystem(camera))
         engine.addSystem(CollisionSystem(context, entityFactory))
+        engine.addSystem(BulletSystem(context, entityFactory, camera))
+        engine.addSystem(SyncTransformAndBodiesSystem(context))
+        engine.addSystem(SyncRenderingOrderTransformWithTransformSystem())
         engine.addSystem(HitpointsSystem(context))
 
         Gdx.input.inputProcessor = context.inputHandler
@@ -86,13 +98,13 @@ class GameScreen : Screen {
     fun initEntities(engine: PooledEngine) {
         val player = entityFactory.createPlayer()
         val rifle = entityFactory.createWeapon(WeaponConfig.valuesFor[WeaponType.RIFLE]!!)
-        val rocketlauncher = entityFactory.createWeapon(WeaponConfig.valuesFor[WeaponType.ROCKETLAUNCHER]!!)
+        //val rocketlauncher = entityFactory.createWeapon(WeaponConfig.valuesFor[WeaponType.ROCKETLAUNCHER]!!)
 
         player.getComponent(PlayerComponent::class.java).weapon = rifle
 
         engine.addEntity(player)
         engine.addEntity(rifle)
-        engine.addEntity(rocketlauncher)
+        //engine.addEntity(rocketlauncher)
     }
 
     /**

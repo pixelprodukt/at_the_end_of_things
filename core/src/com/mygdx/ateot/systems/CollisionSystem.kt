@@ -4,57 +4,51 @@ import com.badlogic.ashley.core.ComponentMapper
 import com.badlogic.ashley.core.Entity
 import com.badlogic.ashley.core.Family
 import com.badlogic.ashley.systems.IteratingSystem
+import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.math.Vector2
+import com.badlogic.gdx.math.Vector3
 import com.mygdx.ateot.components.*
 import com.mygdx.ateot.data.CreateExplosionEventData
 import com.mygdx.ateot.events.CreateExplosionEvent
 import com.mygdx.ateot.helper.*
 
 class CollisionSystem(context: GameContext, private val entityFactory: EntityFactory) :
-    IteratingSystem(Family.all(BodyComponent::class.java).get()) {
+    IteratingSystem(Family.all(CollisionBodyComponent::class.java).get()) {
 
-    private val mapHandler = context.mapHandler
     private val eventHandler = context.eventHandler
+    private val engine = context.engine
 
     private val staticCollisionQueue = mutableListOf<Entity>()
     private val dynamicCollisionQueue = mutableListOf<Entity>()
-    private val sensorCollisionQueue = mutableListOf<Entity>()
     private val hitableCollisionQueue = mutableListOf<Entity>()
-    private val floorCollisionQueue = mutableListOf<Entity>()
-    private val bulletCollisionQueue = mutableListOf<Entity>()
-    private val explosionCollisionQueue = mutableListOf<Entity>()
-    private val hitpointsQueue = mutableListOf<Entity>()
 
-    private val mapperBodyComponent = ComponentMapper.getFor(BodyComponent::class.java)
+    private val mapperCollisionBodyComponent = ComponentMapper.getFor(CollisionBodyComponent::class.java)
+    private val mapperDamageBodyComponent = ComponentMapper.getFor(DamageBodyComponent::class.java)
     private val mapperTransformComponent = ComponentMapper.getFor(TransformComponent::class.java)
     private val mapperPlayerComponent = ComponentMapper.getFor(PlayerComponent::class.java)
     private val mapperBulletComponent = ComponentMapper.getFor(BulletComponent::class.java)
-    private val mapperBarrelComponent = ComponentMapper.getFor(BarrelComponent::class.java)
     private val mapperHitpointsComponent = ComponentMapper.getFor(HitpointsComponent::class.java)
-    private val mapperAnimationStateComponent = ComponentMapper.getFor(AnimationStateComponent::class.java)
-    private val mapperExplosionComponent = ComponentMapper.getFor(ExplosionComponent::class.java)
 
     override fun update(deltaTime: Float) {
         super.update(deltaTime)
 
         /**
-         * collision for movable objects with static mapbodies
+         * collision for movable objects with static bodies (walls, barrels, etc.)
          */
-        staticCollisionQueue.forEach { staticCollisionEntity ->
+        dynamicCollisionQueue.forEach { dynamicCollisionEntity ->
 
-            val staticBody = mapperBodyComponent.get(staticCollisionEntity).body
+            val dynamicBody = mapperCollisionBodyComponent.get(dynamicCollisionEntity).body
 
-            dynamicCollisionQueue.forEach { dynamicCollisionEntity ->
+            staticCollisionQueue.forEach { staticCollisionEntity ->
 
-                val dynamicBody = mapperBodyComponent.get(dynamicCollisionEntity).body
-                val dynamicTransformComponent = mapperTransformComponent.get(dynamicCollisionEntity)
+                val staticBody = mapperCollisionBodyComponent.get(staticCollisionEntity).body
 
                 resolveCollision(dynamicBody, staticBody)
 
-                dynamicTransformComponent.position.x = dynamicBody.position.x
-                dynamicTransformComponent.position.y = dynamicBody.position.y
-
                 /**
                  * Check if entity has the PlayerComponent and set transform of weapon entity to body's transform
+                 * This is here to avoid rendering bugs of the weapon, where the weapon moves a bit forward when
+                 * the player is moving against a wall
                  */
                 if (mapperPlayerComponent.get(dynamicCollisionEntity) != null) {
                     val playerComponent = mapperPlayerComponent.get(dynamicCollisionEntity)
@@ -62,29 +56,8 @@ class CollisionSystem(context: GameContext, private val entityFactory: EntityFac
                     if (playerComponent.weapon != null) {
                         val weaponTransform = mapperTransformComponent.get(playerComponent.weapon)
 
-                        weaponTransform.position.x = dynamicBody!!.position.x
-                        weaponTransform.position.y = dynamicBody!!.position.y
-                    }
-                }
-            }
-        }
-
-
-        explosionCollisionQueue.forEach { explosionEntity ->
-
-            val explosionBodyComponent = mapperBodyComponent.get(explosionEntity)
-            val explosionComponent = mapperExplosionComponent.get(explosionEntity)
-
-            if (explosionBodyComponent.isActiveAsHitbox) {
-
-                hitpointsQueue.forEach { hitpointsEntity ->
-
-                    val hitpointsBodyComponent = mapperBodyComponent.get(hitpointsEntity)
-                    val hitpointsComponent = mapperHitpointsComponent.get(hitpointsEntity)
-
-                    if (intersect(explosionBodyComponent.body, hitpointsBodyComponent.body)) {
-                        //Gdx.app.log("CollisionSystem", "intersecting")
-                        hitpointsComponent.hitpoints -= explosionComponent.damage
+                        weaponTransform.position.x = dynamicBody.position.x
+                        weaponTransform.position.y = dynamicBody.position.y
                     }
                 }
             }
@@ -93,80 +66,100 @@ class CollisionSystem(context: GameContext, private val entityFactory: EntityFac
         /**
          * bulletcollisions are handled here
          */
-        bulletCollisionQueue.forEach { bulletEntity ->
+        val bulletFamily = Family.all(BulletComponent::class.java).get()
+        val bulletEntities = engine.getEntitiesFor(bulletFamily)
+
+        bulletEntities.forEach { bulletEntity ->
 
             hitableCollisionQueue.forEach { hitableCollisionEntity ->
 
-                val staticBody = mapperBodyComponent.get(hitableCollisionEntity).body
-                val bulletBody = mapperBodyComponent.get(bulletEntity).body
+                val hitableBody = mapperCollisionBodyComponent.get(hitableCollisionEntity).body
+                val bulletBody = mapperDamageBodyComponent.get(bulletEntity).body
                 val bulletComponent = mapperBulletComponent.get(bulletEntity)
-                val transformComponent = mapperTransformComponent.get(bulletEntity)
+                val bulletTransformComponent = mapperTransformComponent.get(bulletEntity)
 
-                if (intersect(bulletBody, staticBody)) {
+                if (intersect(bulletBody, hitableBody)) {
                     val eventData =
-                        CreateExplosionEventData(bulletComponent.explosionType, transformComponent.position)
+                        CreateExplosionEventData(bulletComponent.explosionType, bulletTransformComponent.position)
                     eventHandler.publish(CreateExplosionEvent(eventData))
                     entityFactory.removeFromEngine(bulletEntity)
+                }
+            }
+        }
 
-                    if (mapperBarrelComponent.get(hitableCollisionEntity) != null) {
+        /**
+         * damage handling. put it here for the sake of testing, not sure if it should have a seperate system
+         */
+        val damageBodyFamily = Family.all(DamageBodyComponent::class.java).get()
+        val damageBodyEntities = engine.getEntitiesFor(damageBodyFamily)
+        val hitpointsCollisionBodyFamily = Family.all(HitpointsComponent::class.java, CollisionBodyComponent::class.java).get()
+        val hitpointsCollisionBodyEntities = engine.getEntitiesFor(hitpointsCollisionBodyFamily)
 
-                        val hitpointsComponent = mapperHitpointsComponent.get(hitableCollisionEntity)
-                        val animationState = mapperAnimationStateComponent.get(hitableCollisionEntity)
-                        val transformComponent = mapperTransformComponent.get(hitableCollisionEntity)
-                        hitpointsComponent.hitpoints = hitpointsComponent.hitpoints - bulletComponent.damage
+        damageBodyEntities.forEach { damageBodyEntity ->
+
+            val damageBodyComponent = mapperDamageBodyComponent.get(damageBodyEntity)
+
+            hitpointsCollisionBodyEntities.forEach { hitpointsCollisionBodyEntity ->
+
+                val collisionBodyComponent = mapperCollisionBodyComponent.get(hitpointsCollisionBodyEntity)
+                val damageEntityCollisionBodyComponent = mapperCollisionBodyComponent.get(damageBodyEntity)
+
+                if (damageEntityCollisionBodyComponent !== collisionBodyComponent) {
+                    if (intersect(damageBodyComponent.body, collisionBodyComponent.body) && damageBodyComponent.isActive) {
+
+                        val hitpointsComponent = mapperHitpointsComponent.get(hitpointsCollisionBodyEntity)
+
+                        if (!hitpointsComponent.isInvincible && hitpointsComponent.isAlive && damageBodyComponent.damage > 0) {
+
+                            hitpointsComponent.hitpoints -= damageBodyComponent.damage
+
+                            if (hitpointsComponent.isAlive) {
+                                hitpointsComponent.isInvincible = true
+                            }
+
+                            /**
+                             * for testing purposes here. trying out knockback
+                             * edit: guess knockback is canceled
+                             */
+                            /*val damageBodyPosition = mapperTransformComponent.get(damageBodyEntity).position
+                            val hitpointsBodyPosition = mapperTransformComponent.get(hitpointsCollisionBodyEntity).position
+                            val hitpointsBodyComponent = mapperCollisionBodyComponent.get(hitpointsCollisionBodyEntity)
+
+                            val direction = Vector2().set(hitpointsBodyPosition.x, hitpointsBodyPosition.y).sub(damageBodyPosition.x, damageBodyPosition.y).nor()
+                            val velocity = Vector2().set(direction).scl(11.0f)
+
+                            hitpointsBodyComponent.body.velocity.x = velocity.x
+                            hitpointsBodyComponent.body.velocity.y = velocity.y
+                            hitpointsBodyComponent.body.position.x += hitpointsBodyComponent.body.velocity.x
+                            hitpointsBodyComponent.body.position.y += hitpointsBodyComponent.body.velocity.y*/
+                        }
                     }
                 }
-
-                transformComponent.position.x = bulletBody.position.x
-                transformComponent.position.y = bulletBody.position.y
             }
         }
 
         staticCollisionQueue.clear()
         dynamicCollisionQueue.clear()
-        sensorCollisionQueue.clear()
         hitableCollisionQueue.clear()
-        floorCollisionQueue.clear()
-        bulletCollisionQueue.clear()
-        explosionCollisionQueue.clear()
-        hitpointsQueue.clear()
     }
 
     override fun processEntity(entity: Entity?, deltaTime: Float) {
 
         if (entity != null) {
 
-            val bodyComponent = mapperBodyComponent.get(entity)
-            val bulletComponent = mapperBulletComponent.get(entity)
-            val explosionComponent = mapperExplosionComponent.get(entity)
-            val hitpointsComponent = mapperHitpointsComponent.get(entity)
+            val bodyComponent = mapperCollisionBodyComponent.get(entity)
 
-            if (bodyComponent.isCollision && bodyComponent.isStatic && bodyComponent.isHitable) {
-                staticCollisionQueue.add(entity)
-                hitableCollisionQueue.add(entity)
-            }
-
-            if (bodyComponent.isCollision && bodyComponent.isStatic && !bodyComponent.isHitable) {
-                staticCollisionQueue.add(entity)
-                floorCollisionQueue.add(entity)
-            }
-
-            if (bodyComponent.isCollision && !bodyComponent.isStatic && !bodyComponent.isHitable) {
+            if (!bodyComponent.isStatic) {
                 dynamicCollisionQueue.add(entity)
             }
 
-            if (!bodyComponent.isCollision && bulletComponent != null) {
-                bulletCollisionQueue.add(entity)
+            if (bodyComponent.isStatic) {
+                staticCollisionQueue.add(entity)
             }
 
-            if (explosionComponent != null) {
-                explosionCollisionQueue.add(entity)
-            }
-
-            if (hitpointsComponent != null && hitpointsComponent.isAlive) {
-                hitpointsQueue.add(entity)
+            if (bodyComponent.isHitable) {
+                hitableCollisionQueue.add(entity)
             }
         }
-
     }
 }

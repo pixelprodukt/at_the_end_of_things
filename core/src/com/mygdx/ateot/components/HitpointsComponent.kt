@@ -6,6 +6,9 @@ import com.badlogic.gdx.utils.Pool
 class HitpointsComponent : Component, Pool.Poolable {
 
     var hitpoints = 1
+    var isInvincible = false
+    var invincibilityTimeAfterHit = 0.3f
+    var timeSinceLastHit = 0.0f
 
     val isAlive: Boolean
         get() {
@@ -19,5 +22,8 @@ class HitpointsComponent : Component, Pool.Poolable {
 
     override fun reset() {
         hitpoints = 1
+        isInvincible = false
+        invincibilityTimeAfterHit = 2.0f
+        timeSinceLastHit = 0.0f
     }
 }

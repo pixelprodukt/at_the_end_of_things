@@ -43,7 +43,14 @@ class MapHandler(private val entityFactory: EntityFactory) {
             ?: throw Exception("No gameobjects layer found")
 
         rectangleList.forEach { mapObject ->
-            entityFactory.createExplosiveBarrel(Vector2(mapObject.x + (mapObject.properties["width"] as Float / 2), mapObject.y + (mapObject.properties["height"] as Float / 2)))
+
+            if (mapObject.properties["type"] == "explosive_barrel") {
+                entityFactory.createExplosiveBarrel(Vector2(mapObject.x + (mapObject.properties["width"] as Float / 2), mapObject.y + (mapObject.properties["height"] as Float / 2)))
+            }
+
+            if (mapObject.properties["type"] == "fleshblob") {
+                entityFactory.createFleshblob(Vector2(mapObject.x + (mapObject.properties["width"] as Float / 2), mapObject.y + (mapObject.properties["height"] as Float / 2)))
+            }
         }
     }
 

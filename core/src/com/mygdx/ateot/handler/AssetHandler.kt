@@ -12,6 +12,7 @@ class AssetHandler {
     val assets = AssetManager().apply {
 
         load(Assets.PLAYER, Texture::class.java)
+        load(Assets.PLAYER_DEATH, Texture::class.java)
         load(Assets.WEAPON_HANDS, Texture::class.java)
         load(Assets.WEAPON_RIFLE, Texture::class.java)
         load(Assets.WEAPON_ROCKETLAUNCHER, Texture::class.java)

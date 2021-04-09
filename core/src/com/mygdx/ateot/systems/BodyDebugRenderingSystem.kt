@@ -1,33 +1,34 @@
 package com.mygdx.ateot.systems
 
 import com.badlogic.ashley.core.ComponentMapper
-import com.badlogic.ashley.core.Entity
+import com.badlogic.ashley.core.EntitySystem
 import com.badlogic.ashley.core.Family
-import com.badlogic.ashley.systems.IteratingSystem
-import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
-import com.mygdx.ateot.components.BodyComponent
-import com.mygdx.ateot.components.TransformComponent
-import com.mygdx.ateot.handler.InputHandler
-import com.mygdx.ateot.handler.MapHandler
+import com.mygdx.ateot.components.CollisionBodyComponent
+import com.mygdx.ateot.components.DamageBodyComponent
 import com.mygdx.ateot.helper.GameContext
 import ktx.graphics.use
 
 class BodyDebugRenderingSystem(
     context: GameContext,
     private val camera: OrthographicCamera
-) :
-    IteratingSystem(Family.all(BodyComponent::class.java).get()) {
+) : EntitySystem() {
 
     private val inputHandler = context.inputHandler
+    private val engine = context.engine
     private val shapeRenderer = ShapeRenderer()
-    private val mapperBodyComponent = ComponentMapper.getFor(BodyComponent::class.java)
-    private val renderQueue = mutableListOf<Entity>()
+    private val mapperCollisionBodyComponent = ComponentMapper.getFor(CollisionBodyComponent::class.java)
+    private val mapperDamageBodyComponent = ComponentMapper.getFor(DamageBodyComponent::class.java)
 
     override fun update(deltaTime: Float) {
         super.update(deltaTime)
+
+        val collisionBodiesFamily = Family.all(CollisionBodyComponent::class.java).get()
+        val collisionBodiesEntities = engine.getEntitiesFor(collisionBodiesFamily)
+        val damageBodiesFamily = Family.all(DamageBodyComponent::class.java).get()
+        val damageBodiesEntities = engine.getEntitiesFor(damageBodiesFamily)
 
         if (inputHandler.isDebug) {
 
@@ -36,14 +37,29 @@ class BodyDebugRenderingSystem(
             shapeRenderer.use(ShapeRenderer.ShapeType.Line) {
                 shapeRenderer.color = Color.GREEN
 
-                renderQueue.forEach { entity ->
+                collisionBodiesEntities.forEach { entity ->
                     shapeRenderer.color = Color.GREEN
 
-                    val bodyComponent = mapperBodyComponent.get(entity)
+                    val bodyComponent = mapperCollisionBodyComponent.get(entity)
 
                     if (bodyComponent != null) {
 
-                        if (bodyComponent.isActiveAsHitbox) {
+                        shapeRenderer.rect(
+                            bodyComponent.body.position.x + bodyComponent.body.offset.x,
+                            bodyComponent.body.position.y + bodyComponent.body.offset.y,
+                            bodyComponent.body.size.x,
+                            bodyComponent.body.size.y
+                        )
+                    }
+                }
+
+                damageBodiesEntities.forEach { entity ->
+                    shapeRenderer.color = Color.BLUE
+                    val bodyComponent = mapperDamageBodyComponent.get(entity)
+
+                    if (bodyComponent != null) {
+
+                        if (bodyComponent.isActive) {
                             shapeRenderer.color = Color.RED
                         }
 
@@ -57,11 +73,6 @@ class BodyDebugRenderingSystem(
                 }
             }
         }
-
-        renderQueue.clear()
     }
 
-    override fun processEntity(entity: Entity?, deltaTime: Float) {
-        renderQueue.add(entity!!)
-    }
 }

@@ -4,11 +4,7 @@ import com.badlogic.ashley.core.ComponentMapper
 import com.badlogic.ashley.core.Entity
 import com.badlogic.ashley.core.Family
 import com.badlogic.ashley.systems.IteratingSystem
-import com.badlogic.gdx.Gdx
-import com.mygdx.ateot.components.AnimationComponent
-import com.mygdx.ateot.components.AnimationStateComponent
-import com.mygdx.ateot.components.BodyComponent
-import com.mygdx.ateot.components.ExplosionComponent
+import com.mygdx.ateot.components.*
 import com.mygdx.ateot.events.CreateExplosionEvent
 import com.mygdx.ateot.events.GameEventListener
 import com.mygdx.ateot.helper.EntityFactory
@@ -22,7 +18,7 @@ class ExplosionSystem(
     private val eventHandler = context.eventHandler
     private val mapperAnimationComponent = ComponentMapper.getFor(AnimationComponent::class.java)
     private val mapperAnimationStateComponent = ComponentMapper.getFor(AnimationStateComponent::class.java)
-    private val bodyComponentMapper = ComponentMapper.getFor(BodyComponent::class.java)
+    private val mapperDamageBodyComponent = ComponentMapper.getFor(DamageBodyComponent::class.java)
 
     init {
         eventHandler.addListener(object : GameEventListener<CreateExplosionEvent> {
@@ -35,9 +31,9 @@ class ExplosionSystem(
     override fun processEntity(entity: Entity?, deltaTime: Float) {
         val animationComponent = mapperAnimationComponent.get(entity)
         val animationStateComponent = mapperAnimationStateComponent.get(entity)
-        val bodyComponent = bodyComponentMapper.get(entity)
+        val bodyComponent = mapperDamageBodyComponent.get(entity)
 
-        bodyComponent.isActiveAsHitbox =
+        bodyComponent.isActive =
             animationComponent.animations[AnimationStateComponent.EXPLOSION]?.getKeyFrameIndex(animationStateComponent.time) == 2
 
         if (animationComponent.animations[AnimationStateComponent.EXPLOSION]?.isAnimationFinished(animationStateComponent.time) == true) {

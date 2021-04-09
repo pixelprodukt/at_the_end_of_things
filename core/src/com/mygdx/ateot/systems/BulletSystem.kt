@@ -7,17 +7,11 @@ import com.badlogic.ashley.systems.IteratingSystem
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.math.Vector3
-import com.mygdx.ateot.components.BodyComponent
-import com.mygdx.ateot.components.BulletComponent
-import com.mygdx.ateot.components.TransformComponent
-import com.mygdx.ateot.components.WeaponComponent
-import com.mygdx.ateot.data.CreateExplosionEventData
-import com.mygdx.ateot.events.CreateExplosionEvent
+import com.mygdx.ateot.components.*
 import com.mygdx.ateot.events.GameEventListener
 import com.mygdx.ateot.events.WeaponFireEvent
 import com.mygdx.ateot.helper.EntityFactory
 import com.mygdx.ateot.helper.GameContext
-import com.mygdx.ateot.helper.pointIntersectsWithBody
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -26,11 +20,11 @@ class BulletSystem(
     private val entityFactory: EntityFactory,
     private val camera: OrthographicCamera
 ) :
-    IteratingSystem(Family.all(BulletComponent::class.java).get()) {
+    IteratingSystem(Family.all(BulletComponent::class.java, TransformComponent::class.java, DamageBodyComponent::class.java).get()) {
 
     private val eventHandler = context.eventHandler
     private val mapperTransformComponent = ComponentMapper.getFor(TransformComponent::class.java)
-    private val mapperBodyComponent = ComponentMapper.getFor(BodyComponent::class.java)
+    private val mapperDamageBodyComponent = ComponentMapper.getFor(DamageBodyComponent::class.java)
     private val mapperBulletComponent = ComponentMapper.getFor(BulletComponent::class.java)
     private val mapperWeaponComponent = ComponentMapper.getFor(WeaponComponent::class.java)
 
@@ -61,6 +55,7 @@ class BulletSystem(
                     ((cos(radians) * distanceToCenter) + ((weaponTransformComponent.position.x) + weaponTransformComponent.offset.x + weaponTransformComponent.originOffset.x)).toFloat()
                 val y =
                     ((sin(radians) * distanceToCenter) + ((weaponTransformComponent.position.y) + weaponTransformComponent.offset.y + weaponTransformComponent.originOffset.y)).toFloat()
+
                 val spawnPointAroundWeapon = Vector3(x, y, 0.0f)
 
                 // TODO Refactor: Naming is shit, I got confused myself for what the parameters are for
@@ -80,7 +75,7 @@ class BulletSystem(
     override fun processEntity(entity: Entity?, deltaTime: Float) {
 
         val bulletComponent = mapperBulletComponent.get(entity)
-        val bodyComponent = mapperBodyComponent.get(entity)
+        val bodyComponent = mapperDamageBodyComponent.get(entity)
 
         val direction = Vector3().set(bulletComponent.target).sub(bulletComponent.spawn).nor()
         val velocity = Vector3().set(direction).scl(bulletComponent.speed)
