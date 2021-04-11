@@ -51,7 +51,7 @@ class EntityFactory(private val engine: PooledEngine, private val assetHandler: 
         val textureComponent = engine.createComponent(TextureComponent::class.java)
         val playerComponent = engine.createComponent(PlayerComponent::class.java)
         val hitpointsComponent = engine.createComponent(HitpointsComponent::class.java).apply {
-            hitpoints = 10000
+            hitpoints = 20
             invincibilityTimeAfterHit = 1.0f
         }
         val animationComponent = engine.createComponent(AnimationComponent::class.java)
@@ -278,7 +278,7 @@ class EntityFactory(private val engine: PooledEngine, private val assetHandler: 
         }
 
         val hitpointsComponent = engine.createComponent(HitpointsComponent::class.java).apply {
-            hitpoints = 20
+            hitpoints = 10
             invincibilityTimeAfterHit = 0.2f
         }
 
@@ -409,7 +409,7 @@ class EntityFactory(private val engine: PooledEngine, private val assetHandler: 
 
         val enemyComponent = engine.createComponent(EnemyComponent::class.java)
         val hitpointsComponent = engine.createComponent(HitpointsComponent::class.java).apply {
-            hitpoints = 50
+            hitpoints = 15
             invincibilityTimeAfterHit = 0.3f
         }
 

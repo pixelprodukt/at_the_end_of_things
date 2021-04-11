@@ -14,9 +14,10 @@ import com.mygdx.ateot.helper.GameContext
 /**
  * TODO: currently only gets barrels
  */
-class HitpointsSystem(context: GameContext) : IteratingSystem(Family.all(HitpointsComponent::class.java).get()) {
+class HitpointsSystem(private val context: GameContext) : IteratingSystem(Family.all(HitpointsComponent::class.java).get()) {
 
     private val eventHandler = context.eventHandler
+    private val assetHandler = context.assetHandler
 
     private val mapperHitpointsComponent = ComponentMapper.getFor(HitpointsComponent::class.java)
     private val mapperTransformComponent = ComponentMapper.getFor(TransformComponent::class.java)
@@ -65,6 +66,7 @@ class HitpointsSystem(context: GameContext) : IteratingSystem(Family.all(Hitpoin
                 animationStateComponent.state = AnimationStateComponent.DEATH
                 val eventData = CreateExplosionEventData(ExplosionType.BARREL, transformComponent.position)
                 eventHandler.publish(CreateExplosionEvent(eventData))
+                assetHandler.explosion01.play(context.masterVolume)
             }
         }
 
@@ -76,11 +78,11 @@ class HitpointsSystem(context: GameContext) : IteratingSystem(Family.all(Hitpoin
             val hitpointsComponent = mapperHitpointsComponent.get(entity)
             val animationStateComponent = mapperAnimationStateComponent.get(entity)
 
-            if (hitpointsComponent.isDead && (
-                        animationStateComponent.state != AnimationStateComponent.DEATH_UP_RIGHT ||
-                                animationStateComponent.state != AnimationStateComponent.DEATH_UP_LEFT ||
-                                animationStateComponent.state != AnimationStateComponent.DEATH_DOWN_RIGHT ||
-                                animationStateComponent.state != AnimationStateComponent.DEATH_DOWN_LEFT)
+            if (hitpointsComponent.isDead && !(
+                        animationStateComponent.state == AnimationStateComponent.DEATH_UP_RIGHT ||
+                                animationStateComponent.state == AnimationStateComponent.DEATH_UP_LEFT ||
+                                animationStateComponent.state == AnimationStateComponent.DEATH_DOWN_RIGHT ||
+                                animationStateComponent.state == AnimationStateComponent.DEATH_DOWN_LEFT)
             ) {
 
                 when (animationStateComponent.state) {
@@ -101,6 +103,8 @@ class HitpointsSystem(context: GameContext) : IteratingSystem(Family.all(Hitpoin
                 if (damageBodyComponent != null) {
                     damageBodyComponent.isActive = false
                 }
+
+                assetHandler.fleshblobDeath.play(context.masterVolume)
             }
         }
 
@@ -112,11 +116,11 @@ class HitpointsSystem(context: GameContext) : IteratingSystem(Family.all(Hitpoin
             val hitpointsComponent = mapperHitpointsComponent.get(entity)
             val animationStateComponent = mapperAnimationStateComponent.get(entity)
 
-            if (hitpointsComponent.isDead && (
-                        animationStateComponent.state != AnimationStateComponent.DEATH_UP_RIGHT ||
-                                animationStateComponent.state != AnimationStateComponent.DEATH_UP_LEFT ||
-                                animationStateComponent.state != AnimationStateComponent.DEATH_DOWN_RIGHT ||
-                                animationStateComponent.state != AnimationStateComponent.DEATH_DOWN_LEFT)
+            if (hitpointsComponent.isDead && !(
+                        animationStateComponent.state == AnimationStateComponent.DEATH_UP_RIGHT ||
+                                animationStateComponent.state == AnimationStateComponent.DEATH_UP_LEFT ||
+                                animationStateComponent.state == AnimationStateComponent.DEATH_DOWN_RIGHT ||
+                                animationStateComponent.state == AnimationStateComponent.DEATH_DOWN_LEFT)
             ) {
 
                 val weaponTransform = mapperTransformComponent.get(mapperPlayerComponent.get(entity).weapon)
@@ -136,6 +140,8 @@ class HitpointsSystem(context: GameContext) : IteratingSystem(Family.all(Hitpoin
                 }
 
                 animationStateComponent.isLooping = false
+
+                assetHandler.playerDeath.play(context.masterVolume)
             }
         }
 

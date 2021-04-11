@@ -20,4 +20,9 @@ class GameContext {
     val entityFactory = EntityFactory(engine, assetHandler)
 
     val mapHandler = MapHandler(entityFactory).apply { loadMap("ateot_testmap") }
+
+    /**
+     * Game Config Constants
+     */
+    var masterVolume = 1.0f
 }

@@ -24,6 +24,7 @@ class GameScreen : Screen {
 
     private val context = GameContext()
     private val batch = SpriteBatch()
+    private val uiBatch = SpriteBatch()
     private val renderingSystem = RenderingSystem(batch)
     private val camera = renderingSystem.camera
     private val engine = context.engine
@@ -49,17 +50,18 @@ class GameScreen : Screen {
         engine.addSystem(RenderingOrderTransformDebugSystem(context, camera))
         engine.addSystem(TransformDebugRenderingSystem(context, camera))
         engine.addSystem(ExplosionSystem(context, entityFactory))
+
         engine.addSystem(PlayerControlSystem(context, camera))
-        engine.addSystem(WeaponSystem(camera))
         engine.addSystem(CollisionSystem(context, entityFactory))
+        engine.addSystem(WeaponSystem(camera))
         engine.addSystem(BulletSystem(context, entityFactory, camera))
         engine.addSystem(SyncTransformAndBodiesSystem(context))
         engine.addSystem(SyncRenderingOrderTransformWithTransformSystem())
         engine.addSystem(HitpointsSystem(context))
+        engine.addSystem(GameinfoDebugRenderingSystem(context, uiBatch))
 
         Gdx.input.inputProcessor = context.inputHandler
 
-        //engine.addEntity(entityFactory.createPlayer())
         initEntities(engine)
 
         mapRenderer.map = context.mapHandler.currentTiledMap
@@ -98,13 +100,13 @@ class GameScreen : Screen {
     fun initEntities(engine: PooledEngine) {
         val player = entityFactory.createPlayer()
         val rifle = entityFactory.createWeapon(WeaponConfig.valuesFor[WeaponType.RIFLE]!!)
-        //val rocketlauncher = entityFactory.createWeapon(WeaponConfig.valuesFor[WeaponType.ROCKETLAUNCHER]!!)
+        val rocketlauncher = entityFactory.createWeapon(WeaponConfig.valuesFor[WeaponType.ROCKETLAUNCHER]!!)
 
         player.getComponent(PlayerComponent::class.java).weapon = rifle
 
         engine.addEntity(player)
         engine.addEntity(rifle)
-        //engine.addEntity(rocketlauncher)
+        engine.addEntity(rocketlauncher)
     }
 
     /**

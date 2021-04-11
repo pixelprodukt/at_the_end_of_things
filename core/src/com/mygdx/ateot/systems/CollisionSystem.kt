@@ -12,10 +12,11 @@ import com.mygdx.ateot.data.CreateExplosionEventData
 import com.mygdx.ateot.events.CreateExplosionEvent
 import com.mygdx.ateot.helper.*
 
-class CollisionSystem(context: GameContext, private val entityFactory: EntityFactory) :
+class CollisionSystem(private val context: GameContext, private val entityFactory: EntityFactory) :
     IteratingSystem(Family.all(CollisionBodyComponent::class.java).get()) {
 
     private val eventHandler = context.eventHandler
+    private val assetHandler = context.assetHandler
     private val engine = context.engine
 
     private val staticCollisionQueue = mutableListOf<Entity>()
@@ -118,20 +119,11 @@ class CollisionSystem(context: GameContext, private val entityFactory: EntityFac
                             }
 
                             /**
-                             * for testing purposes here. trying out knockback
-                             * edit: guess knockback is canceled
+                             * check if it's the player an play hitsound
                              */
-                            /*val damageBodyPosition = mapperTransformComponent.get(damageBodyEntity).position
-                            val hitpointsBodyPosition = mapperTransformComponent.get(hitpointsCollisionBodyEntity).position
-                            val hitpointsBodyComponent = mapperCollisionBodyComponent.get(hitpointsCollisionBodyEntity)
-
-                            val direction = Vector2().set(hitpointsBodyPosition.x, hitpointsBodyPosition.y).sub(damageBodyPosition.x, damageBodyPosition.y).nor()
-                            val velocity = Vector2().set(direction).scl(11.0f)
-
-                            hitpointsBodyComponent.body.velocity.x = velocity.x
-                            hitpointsBodyComponent.body.velocity.y = velocity.y
-                            hitpointsBodyComponent.body.position.x += hitpointsBodyComponent.body.velocity.x
-                            hitpointsBodyComponent.body.position.y += hitpointsBodyComponent.body.velocity.y*/
+                            if (mapperPlayerComponent.get(hitpointsCollisionBodyEntity) != null) {
+                                assetHandler.playerGotHit.play(context.masterVolume)
+                            }
                         }
                     }
                 }

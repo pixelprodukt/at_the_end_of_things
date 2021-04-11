@@ -15,4 +15,7 @@ object Assets {
     const val ENEMY_FLESHBLOB = "spritesheets/enemies/fleshblob_spritesheet.png"
 
     const val EXPLOSIVE_BARRELS = "spritesheets/objects/explosive_barrels.png"
+
+    //const val FONT = "fonts/SuperLegendBoy.ttf"
+    const val FONT = "fonts/sneak_attack/sneak_attack.ttf"
 }

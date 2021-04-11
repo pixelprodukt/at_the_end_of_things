@@ -13,7 +13,7 @@ import com.mygdx.ateot.events.WeaponFireEvent
 import com.mygdx.ateot.helper.GameContext
 
 class PlayerControlSystem(
-    context: GameContext,
+    private val context: GameContext,
     private val camera: OrthographicCamera,
 ) :
     IteratingSystem(
@@ -25,6 +25,7 @@ class PlayerControlSystem(
 
     private val inputHandler = context.inputHandler
     private val eventHandler = context.eventHandler
+    private val assetHandler = context.assetHandler
     private val mapperPlayerComponent = ComponentMapper.getFor(PlayerComponent::class.java)
     private val mapperBodyComponent = ComponentMapper.getFor(CollisionBodyComponent::class.java)
     private val mapperAnimationStateComponent = ComponentMapper.getFor(AnimationStateComponent::class.java)
@@ -33,6 +34,7 @@ class PlayerControlSystem(
     private val mapperHitpointsComponent = ComponentMapper.getFor(HitpointsComponent::class.java)
 
     private var fireDelay = 0.0f
+    private var stepSoundInterval = 0.0f
 
     override fun processEntity(entity: Entity?, deltaTime: Float) {
 
@@ -101,6 +103,9 @@ class PlayerControlSystem(
                 if (playerComponent.direction == Direction.UP_LEFT) {
                     animationStateComponent.state = AnimationStateComponent.MOVE_UP_LEFT
                 }
+
+                playStepSound(deltaTime)
+
             } else {
                 if (playerComponent.direction == Direction.DOWN_RIGHT) {
                     animationStateComponent.state = AnimationStateComponent.IDLE_DOWN_RIGHT
@@ -141,8 +146,22 @@ class PlayerControlSystem(
                     muzzleTransformComponent.isHidden = false
                     eventHandler.publish(WeaponFireEvent(playerComponent.weapon!!))
                     fireDelay = weaponComponent.fireRate
+
+                    assetHandler.rifleshotSound.play(context.masterVolume)
                 }
             }
+        }
+    }
+
+    private fun playStepSound(deltaTime: Float) {
+
+        if (stepSoundInterval == 0.0f) {
+            assetHandler.getRandomStepSound().play(context.masterVolume)
+        }
+        if (stepSoundInterval < 0.35f) {
+            stepSoundInterval += deltaTime
+        } else {
+            stepSoundInterval = 0.0f
         }
     }
 }
