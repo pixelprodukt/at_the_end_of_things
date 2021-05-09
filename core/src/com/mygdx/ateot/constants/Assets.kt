@@ -16,6 +16,6 @@ object Assets {
 
     const val EXPLOSIVE_BARRELS = "spritesheets/objects/explosive_barrels.png"
 
-    //const val FONT = "fonts/SuperLegendBoy.ttf"
     const val FONT = "fonts/sneak_attack/sneak_attack.ttf"
+    //const val FONT = "fonts/monogram_extended.ttf"
 }

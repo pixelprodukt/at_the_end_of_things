@@ -37,8 +37,8 @@ class AssetHandler {
 
         val fontLoaderParameter = FreetypeFontLoader.FreeTypeFontLoaderParameter()
         fontLoaderParameter.fontFileName = Assets.FONT
-        fontLoaderParameter.fontParameters.size = 7
-        fontLoaderParameter.fontParameters.spaceY = -6
+        fontLoaderParameter.fontParameters.size = 7//16
+        fontLoaderParameter.fontParameters.spaceY = -6//-2
 
         load(Assets.FONT, BitmapFont::class.java, fontLoaderParameter)
 
